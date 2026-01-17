@@ -1,14 +1,12 @@
 
 #!/usr/bin/env python3
 """
-Sentinel Infinite Engine v7.6.1 (Ghost Protocol - Robust Vision)
+Sentinel Infinite Engine v7.6.2 (Ghost Protocol - Discord Integrated)
 =========================================================
 Features:
-1. Robust Screenshot: PyAutoGUI + Scrot fallback.
-2. Fixed Driver Injection: Skills now have access to self.driver.
-3. Human Motor Control: Mouse overshoot, jitter, variable speed.
-
-Author: Sentinel SRE Team
+1. Discord Notifier: Real-time alerts via DISCORD_WEBHOOK.
+2. Robust Screenshot: PyAutoGUI + Scrot fallback.
+3. Fixed Driver Injection: Skills now have access to self.driver.
 """
 
 import sys
@@ -59,12 +57,38 @@ from selenium.webdriver.chrome.options import Options
 
 # --- CONFIG ---
 BRAIN_URL = "http://localhost:5000"
+DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
 EXTENSION_DIR = "extensions"
 os.makedirs(EXTENSION_DIR, exist_ok=True)
 DANGER_KEYWORDS = ["admin", "mod", "banned", "report", "hacking", "bot"]
 
 def log_console(msg):
     print(f"[{time.strftime('%H:%M:%S')}] 👻 {msg}")
+
+# --- MODULE: DISCORD NOTIFIER ---
+class DiscordNotifier:
+    def __init__(self, webhook_url):
+        self.webhook_url = webhook_url
+
+    def send(self, title, description, color=0x00f2ff, fields=None):
+        if not self.webhook_url:
+            return
+        
+        payload = {
+            "embeds": [{
+                "title": title,
+                "description": description,
+                "color": color,
+                "fields": fields or [],
+                "timestamp": datetime.datetime.utcnow().isoformat()
+            }]
+        }
+        
+        try:
+            threading.Thread(target=lambda: requests.post(self.webhook_url, json=payload, timeout=10)).start()
+        except: pass
+
+import datetime
 
 # --- MODULE: GHOST PROTOCOL (HUMAN BEHAVIOR) ---
 class GhostHumanizer:
@@ -105,19 +129,6 @@ class GhostHumanizer:
             pyautogui.moveTo(bx, by)
             time.sleep(duration / steps)
 
-    def type_human(self, text):
-        for char in text:
-            pyautogui.typewrite(char)
-            time.sleep(random.uniform(0.05, 0.15))
-            if char in [' ', ',', '.']:
-                time.sleep(random.uniform(0.1, 0.3))
-            if random.random() < 0.01:
-                wrong_char = random.choice('abcdefghijklmnopqrstuvwxyz')
-                pyautogui.typewrite(wrong_char)
-                time.sleep(0.1)
-                pyautogui.press('backspace')
-                time.sleep(0.1)
-
 # --- MODULE: VISION & SAFETY ---
 class VisionEngine:
     def __init__(self, agent):
@@ -132,9 +143,10 @@ class VisionEngine:
             save_path = "/tmp/ocr_capture.png"
             self.agent.take_screenshot(save_path)
             img = cv2.imread(save_path)
+            if img is None: return ""
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             return pytesseract.image_to_string(gray).strip().lower()
-        except Exception as e: 
+        except Exception: 
             return ""
 
 class AdminWatchdog:
@@ -146,50 +158,24 @@ class AdminWatchdog:
         for kw in DANGER_KEYWORDS:
             if kw in text:
                 log_console(f"🚨 THREAT DETECTED: '{kw}' found on screen!")
+                self.agent.discord.send(
+                    title="🚨 KILL SWITCH ACTIVATED",
+                    description=f"Sentinel detected a critical threat and initiated emergency shutdown.",
+                    color=0xff2d55,
+                    fields=[
+                        {"name": "Trigger Keyword", "value": kw, "inline": True},
+                        {"name": "Detected Context", "value": text[:200] + "...", "inline": False}
+                    ]
+                )
                 self.emergency_shutdown()
                 
     def emergency_shutdown(self):
         log_console("⚡ ACTIVATING KILL SWITCH...")
         pyautogui.hotkey('alt', 'f4')
-        time.sleep(1)
-        os.system("pkill chrome")
+        time.sleep(2)
+        os.system("pkill -9 chrome")
+        os.system("pkill -9 chromium")
         sys.exit(0)
-
-# --- EVOLUTION MANAGER ---
-class EvolutionManager:
-    def __init__(self, agent):
-        self.agent = agent
-        self.loaded_skills = set()
-        self.last_evolve_time = time.time()
-
-    def load_new_skills(self):
-        if not os.path.abspath(EXTENSION_DIR) in sys.path:
-            sys.path.append(os.path.abspath(EXTENSION_DIR))
-        files = glob.glob(os.path.join(EXTENSION_DIR, "skill_*.py"))
-        for f in files:
-            name = Path(f).stem
-            if name not in self.loaded_skills:
-                try:
-                    if name in sys.modules: 
-                        mod = importlib.reload(sys.modules[name])
-                    else: 
-                        mod = importlib.import_module(name)
-                    
-                    if hasattr(mod, 'execute'):
-                        log_console(f"✨ Learned: {name}")
-                        mod.execute(self.agent)
-                        self.loaded_skills.add(name)
-                except Exception as e:
-                    log_console(f"Skill error in {name}: {e}")
-
-    def trigger_evolution(self):
-        if time.time() - self.last_evolve_time > 300: 
-            threading.Thread(target=self._async_evolve).start()
-            self.last_evolve_time = time.time()
-
-    def _async_evolve(self):
-        try: requests.post(f"{BRAIN_URL}/evolve", json={}, timeout=20)
-        except: pass
 
 # --- MAIN AGENT ---
 class SentinelAgent:
@@ -197,17 +183,14 @@ class SentinelAgent:
         self.human = GhostHumanizer()
         self.vision = VisionEngine(self)
         self.watchdog = AdminWatchdog(self)
-        self.evolution = EvolutionManager(self)
+        self.discord = DiscordNotifier(DISCORD_WEBHOOK)
         self.pg = pyautogui
         self.driver = None
 
     def take_screenshot(self, path):
-        """Robust screenshot with scrot fallback for Linux environments"""
         try:
-            # Try PyAutoGUI/Pillow first
             self.pg.screenshot(path)
         except Exception:
-            # Fallback to scrot system command
             try:
                 os.system(f"scrot -q 100 {path} > /dev/null 2>&1")
             except Exception as e:
@@ -221,38 +204,52 @@ class SentinelAgent:
         opts.add_argument("--window-size=1280,720")
         
         try:
-            log_console("🚀 Sentinel v7.6.1 Ghost Protocol Active.")
+            log_console("🚀 Sentinel v7.6.2 Ghost Protocol Active.")
+            self.discord.send(
+                title="🚀 SENTINEL INITIALIZED",
+                description="Ghost Protocol v7.6.2 is now active on GitHub Runner.",
+                fields=[
+                    {"name": "Display", "value": os.environ.get("DISPLAY", "None"), "inline": True},
+                    {"name": "Resolution", "value": "1280x720", "inline": True}
+                ]
+            )
+            
             self.driver = webdriver.Chrome(options=opts)
-            self.driver.set_window_size(1280, 720)
             self.driver.get("https://www.roblox.com")
+            
+            # Smart Delay to avoid instant bot flags
+            time.sleep(random.uniform(5, 10))
             
             while True:
                 self.watchdog.scan_threats()
-                self.evolution.load_new_skills()
-                self.evolution.trigger_evolution()
                 
-                if random.random() < 0.05:
-                    x = random.randint(200, 1000)
-                    y = random.randint(200, 600)
-                    self.human.move_mouse_human(x, y)
+                # Check for Extensions
+                sys.path.append(os.path.abspath(EXTENSION_DIR))
+                for f in glob.glob(os.path.join(EXTENSION_DIR, "skill_*.py")):
+                    name = Path(f).stem
+                    try:
+                        mod = importlib.import_module(name)
+                        if hasattr(mod, 'execute'): mod.execute(self)
+                    except: pass
                 
-                if random.random() < 0.02:
-                    pyautogui.press('space')
-                    time.sleep(random.uniform(0.5, 1.5))
+                # Human Idle Movement
+                if random.random() < 0.1:
+                    self.human.move_mouse_human(random.randint(100, 1100), random.randint(100, 600))
                 
-                time.sleep(random.uniform(2.0, 5.0))
+                time.sleep(random.uniform(10.0, 30.0))
                 
         except SystemExit:
             log_console("🛡️ Safe Exit Completed.")
         except Exception as e:
             log_console(f"🔥 CRASH: {e}")
-            trace = traceback.format_exc()
-            try: requests.post(f"{BRAIN_URL}/self_heal", json={"traceback": trace})
-            except: pass
+            self.discord.send(
+                title="🔥 SYSTEM CRASH",
+                description="An unhandled exception occurred in the main agent loop.",
+                color=0xffcc00,
+                fields=[{"name": "Error", "value": str(e), "inline": False}]
+            )
         finally:
-            if self.driver:
-                try: self.driver.quit()
-                except: pass
+            if self.driver: self.driver.quit()
 
 if __name__ == "__main__":
     if not os.environ.get("DISPLAY"):
