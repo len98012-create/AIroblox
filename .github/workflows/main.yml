@@ -49,23 +49,22 @@ jobs:
 
       - name: 📦 Install Python Deps
         run: |
-          # Chỉ cài nếu thư viện chưa tồn tại trong Cache
           if [ ! -d "libs/google" ]; then
-            echo "Cache miss! Installing dependencies..."
+            echo "Installing dependencies..."
+            # LƯU Ý QUAN TRỌNG: Dùng 'google-genai' cho SDK mới
             pip install -q -t libs \
-              google-generativeai \
+              google-genai \
+              flask \
               requests \
               pyautogui \
               Pillow \
               selenium \
               psutil \
-              flask \
               pytesseract \
               opencv-python-headless
           else
-            echo "⚡ Cache hit! Skipping pip install."
+            echo "⚡ Cache hit! Skipping install."
           fi
-
       - name: 🚀 Turbo Run (Brain + Agent)
         run: |
           # 1. Khởi chạy GUI ảo (Low Res để tối ưu tốc độ xử lý ảnh)
