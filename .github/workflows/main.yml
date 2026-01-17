@@ -45,11 +45,12 @@ jobs:
 
       - name: 📦 Python Core Install
         run: |
-          if [ ! -d "libs/google" ]; then
-            pip install -q -t libs \
-              google-genai flask requests pyautogui Pillow \
-              selenium psutil pytesseract opencv-python-headless
-          fi
+          # Xóa bỏ các tệp cũ gây xung đột namespace
+          rm -rf libs/google* # Cài đặt chính xác SDK 2026
+          pip install -q -t libs \
+            google-genai \
+            flask requests pyautogui Pillow \
+            selenium psutil pytesseract opencv-python-headless
 
       - name: 🚀 Launch Sentinel v7.7
         run: |
