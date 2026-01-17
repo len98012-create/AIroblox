@@ -2,16 +2,16 @@
 name: Sentinel_SRE_Turbo_Speed
 
 on:
-  workflow_dispatch:      # Kích hoạt thủ công
+  workflow_dispatch:
   schedule:
-    - cron: '0 */4 * * *' # Tự động chạy mỗi 4 tiếng
+    - cron: '0 */4 * * *'
 
 jobs:
   run-sentinel:
     runs-on: ubuntu-latest
-    timeout-minutes: 350 
+    timeout-minutes: 350
     permissions:
-      contents: write    
+      contents: write
     
     env:
       XAUTHORITY: /home/runner/.Xauthority
@@ -29,26 +29,25 @@ jobs:
         uses: actions/cache@v3
         with:
           path: libs
-          key: sentinel-libs-${{ runner.os }}-${{ hashFiles('**/app.py') }}
+          key: sentinel-libs-v7-${{ runner.os }}-${{ hashFiles('**/app.py') }}
           restore-keys: |
-            sentinel-libs-${{ runner.os }}-
+            sentinel-libs-v7-${{ runner.os }}-
 
-      - name: 🛠️ Instant Setup (Deep Fix)
+      - name: 🛠️ System Dependencies
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends \
             chromium-browser xvfb fluxbox xauth scrot tesseract-ocr \
-            python3-tk python3-dev libx11-dev libxext-dev libxrender-dev \
-            libxtst-dev libpng-dev gnome-screenshot > /dev/null
+            python3-tk python3-dev libx11-dev gnome-screenshot > /dev/null
           
           mkdir -p libs memory/action_steps logs/screenshots extensions
           
           touch $XAUTHORITY
           xauth add :99 . $(mcookie)
 
-      - name: 📦 Install Python Deps
+      - name: 📦 Python Core Install
         run: |
-          # Use google-generativeai for better compatibility in custom lib folders
+          # Install to specific target to keep environment clean
           if [ ! -d "libs/google" ]; then
             pip install -q -t libs \
               google-generativeai \
@@ -62,33 +61,32 @@ jobs:
               opencv-python-headless
           fi
 
-      - name: 🚀 Turbo Run
+      - name: 🚀 Launch Sentinel v7.7
         run: |
-          # Start Xvfb with better depth
+          # 1. Display: 24-bit depth is crucial for OpenCV color detection
           Xvfb :99 -screen 0 1280x720x24 -ac +extension RANDR > /dev/null 2>&1 &
           sleep 3
           fluxbox > /dev/null 2>&1 &
           sleep 2
           
-          # Start Brain Service
+          # 2. Brain Service (Background)
           python3 brain_service/app.py & 
-          echo "🧠 Brain Service Started..."
+          echo "🧠 Brain Service Initialized..."
           sleep 5
           
-          # Start Agent
+          # 3. Sentinel Agent (Foreground)
           if [ -f "sentinel_v35_dual_memory.py" ]; then
             python3 sentinel_v35_dual_memory.py
           else
-            echo "Error: sentinel_v35_dual_memory.py not found"
+            echo "❌ Critical: Agent file missing!"
             exit 1
           fi
 
-      - name: 💾 Background Sync (Force Push)
+      - name: 💾 State Persistence
         if: always()
         run: |
-          git config --global user.name "Sentinel-Turbo"
-          git config --global user.email "sre@sentinel.io"
-          # Use -f to bypass .gitignore for logs/memory
+          git config --global user.name "Sentinel-Auto"
+          git config --global user.email "bot@sentinel.io"
           git add -f memory/ logs/ extensions/
-          git commit -m "⚡ Turbo Sync: $(date)" || echo "No changes"
+          git commit -m "💾 Auto-Save: $(date)" || echo "No changes to sync"
           git push -f
