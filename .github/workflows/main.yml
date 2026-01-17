@@ -52,21 +52,29 @@ jobs:
             selenium psutil pytesseract opencv-python-headless
       - name: 🚀 Launch Sentinel v7.7
         run: |
+          # 1. Khởi tạo Display ảo
           Xvfb :99 -screen 0 1280x720x24 -ac +extension RANDR > /dev/null 2>&1 &
           sleep 3
           fluxbox > /dev/null 2>&1 &
           
-          # Khởi chạy Brain
+          # 2. Chạy Brain Service (Ngầm) và lưu PID
           python3 -u brain_service/app.py > logs/brain.log 2>&1 &
+          BRAIN_PID=$!
+          echo "🧠 Brain Service started (PID: $BRAIN_PID)"
           sleep 5
           
-          # Khởi chạy Agent chính với chế độ Unbuffered
+          # 3. Chạy Agent chính (Foreground) - KHÔNG DÙNG & Ở ĐÂY
           if [ -f "sentinel_v35_dual_memory.py" ]; then
-            stdbuf -oL python3 -u sentinel_v35_dual_memory.py 2>&1 | tee logs/agent_runtime.log
+            echo "🚀 Sentinel Agent is taking control..."
+            # Chạy trực tiếp để GitHub Actions phải đợi script này hoàn thành
+            python3 -u sentinel_v35_dual_memory.py 2>&1 | tee logs/agent_runtime.log
           else
-            echo "❌ Agent file missing!"
+            echo "❌ Critical Error: Agent file missing!"
             exit 1
           fi
+
+          # 4. Giữ session cho đến khi Brain hoặc Agent kết thúc
+          wait $BRAIN_PID
 
       - name: 💾 State Persistence
         if: always()
