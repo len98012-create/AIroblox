@@ -1,13 +1,12 @@
 
 #!/usr/bin/env python3
 """
-Sentinel Infinite Engine v7.5 (Ghost Protocol - Anti Ban)
+Sentinel Infinite Engine v7.6 (Ghost Protocol - Fixed Driver)
 =========================================================
 Features:
-1. Human Motor Control: Mouse overshoot, jitter, variable speed.
-2. Typing Simulator: Variable WPM, micro-pauses.
-3. Admin Watchdog: Auto-disconnect on threat detection.
-4. Evolution Loop: Self-coding capabilities.
+1. Fixed Driver Injection: Skills now have access to self.driver.
+2. Human Motor Control: Mouse overshoot, jitter, variable speed.
+3. Evolution Loop: Self-coding capabilities.
 
 Author: Sentinel SRE Team
 """
@@ -47,6 +46,7 @@ loader.ensure("opencv-python-headless", "cv2")
 loader.ensure("pytesseract")
 loader.ensure("numpy")
 loader.ensure("pyautogui")
+loader.ensure("selenium")
 
 import requests
 import psutil
@@ -54,6 +54,8 @@ import cv2
 import numpy as np
 import pytesseract
 import pyautogui
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 # --- CONFIG ---
 BRAIN_URL = "http://localhost:5000"
@@ -68,25 +70,20 @@ def log_console(msg):
 class GhostHumanizer:
     def __init__(self):
         pyautogui.FAILSAFE = False
-        self.screen_w, self.screen_h = pyautogui.size()
 
     def _ease_out_quad(self, n):
         return -n * (n - 2)
 
     def move_mouse_human(self, x, y, speed_factor=1.0):
-        """Di chuyển chuột với độ trượt và run tay giả lập"""
         start_x, start_y = pyautogui.position()
-        
-        # 1. Randomize target slightly (Pixel perfect is robotic)
         target_x = x + random.randint(-3, 3)
         target_y = y + random.randint(-3, 3)
 
-        # 2. Add "Overshoot" (Di chuyển quá đà rồi kéo lại)
         if random.random() < 0.3:
             overshoot_x = target_x + random.randint(-20, 20)
             overshoot_y = target_y + random.randint(-20, 20)
             self._move_curve(start_x, start_y, overshoot_x, overshoot_y, speed_factor)
-            time.sleep(random.uniform(0.05, 0.15)) # Reaction time
+            time.sleep(random.uniform(0.05, 0.15))
             start_x, start_y = overshoot_x, overshoot_y
 
         self._move_curve(start_x, start_y, target_x, target_y, speed_factor)
@@ -94,41 +91,26 @@ class GhostHumanizer:
     def _move_curve(self, x1, y1, x2, y2, speed):
         dist = math.hypot(x2 - x1, y2 - y1)
         duration = (random.uniform(0.2, 0.5) + (dist / 2000)) / speed
-        
-        steps = int(duration * 60)
-        if steps == 0: steps = 1
-        
-        # Bezier Control Points
+        steps = max(1, int(duration * 60))
         cp1_x = x1 + random.randint(-100, 100)
         cp1_y = y1 + random.randint(-100, 100)
         
         for i in range(steps):
             t = i / steps
             t_smooth = self._ease_out_quad(t)
-            
-            # Cubic Bezier Formula
             bx = (1-t_smooth)**3*x1 + 3*(1-t_smooth)**2*t_smooth*cp1_x + t_smooth**3*x2
             by = (1-t_smooth)**3*y1 + 3*(1-t_smooth)**2*t_smooth*cp1_y + t_smooth**3*y2
-            
-            # Add micro-jitter (Run tay)
             bx += random.uniform(-1, 1)
             by += random.uniform(-1, 1)
-            
             pyautogui.moveTo(bx, by)
             time.sleep(duration / steps)
 
     def type_human(self, text):
-        """Gõ phím như người, có delay, có sai sót"""
         for char in text:
             pyautogui.typewrite(char)
-            # Tốc độ gõ biến thiên
             time.sleep(random.uniform(0.05, 0.15))
-            
-            # Giả lập suy nghĩ giữa câu
             if char in [' ', ',', '.']:
                 time.sleep(random.uniform(0.1, 0.3))
-                
-            # Random typo (1% chance) - Gõ sai rồi xóa
             if random.random() < 0.01:
                 wrong_char = random.choice('abcdefghijklmnopqrstuvwxyz')
                 pyautogui.typewrite(wrong_char)
@@ -143,7 +125,6 @@ class VisionEngine:
     
     def read_text(self):
         try:
-            # Preprocess for better OCR
             img = np.array(pyautogui.screenshot())
             gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
             return pytesseract.image_to_string(gray).strip().lower()
@@ -154,7 +135,6 @@ class AdminWatchdog:
         self.agent = agent
         
     def scan_threats(self):
-        """Quét màn hình tìm từ khóa Admin/Report"""
         text = self.agent.vision.read_text()
         for kw in DANGER_KEYWORDS:
             if kw in text:
@@ -162,11 +142,9 @@ class AdminWatchdog:
                 self.emergency_shutdown()
                 
     def emergency_shutdown(self):
-        """Thoát game ngay lập tức"""
         log_console("⚡ ACTIVATING KILL SWITCH...")
         pyautogui.hotkey('alt', 'f4')
         time.sleep(1)
-        # Nếu cần thiết, đóng luôn trình duyệt bằng lệnh hệ thống
         os.system("pkill chrome")
         sys.exit(0)
 
@@ -175,27 +153,29 @@ class EvolutionManager:
     def __init__(self, agent):
         self.agent = agent
         self.loaded_skills = set()
-        self.last_evolve_time = time.time() # Delay start
+        self.last_evolve_time = time.time()
 
     def load_new_skills(self):
-        sys.path.append(os.path.abspath(EXTENSION_DIR))
+        if not os.path.abspath(EXTENSION_DIR) in sys.path:
+            sys.path.append(os.path.abspath(EXTENSION_DIR))
         files = glob.glob(os.path.join(EXTENSION_DIR, "skill_*.py"))
         for f in files:
             name = Path(f).stem
             if name not in self.loaded_skills:
                 try:
-                    if name in sys.modules: importlib.reload(sys.modules[name])
-                    else: importlib.import_module(name)
-                    mod = sys.modules[name]
+                    if name in sys.modules: 
+                        mod = importlib.reload(sys.modules[name])
+                    else: 
+                        mod = importlib.import_module(name)
+                    
                     if hasattr(mod, 'execute'):
                         log_console(f"✨ Learned: {name}")
                         mod.execute(self.agent)
                         self.loaded_skills.add(name)
                 except Exception as e:
-                    print(f"Skill error: {e}")
+                    log_console(f"Skill error in {name}: {e}")
 
     def trigger_evolution(self):
-        # Chỉ tạo code mới khi an toàn và rảnh rỗi (mỗi 5 phút)
         if time.time() - self.last_evolve_time > 300: 
             threading.Thread(target=self._async_evolve).start()
             self.last_evolve_time = time.time()
@@ -207,55 +187,52 @@ class EvolutionManager:
 # --- MAIN AGENT ---
 class SentinelAgent:
     def __init__(self):
-        self.human = GhostHumanizer() # Thay thế chuột cũ
+        self.human = GhostHumanizer()
         self.vision = VisionEngine()
         self.watchdog = AdminWatchdog(self)
         self.evolution = EvolutionManager(self)
         self.pg = pyautogui
+        self.driver = None # INITIALIZED FIX
 
     def run(self):
-        from selenium import webdriver
-        from selenium.webdriver.chrome.options import Options
-        
         opts = Options()
         opts.add_argument("--mute-audio")
-        driver = webdriver.Chrome(options=opts)
-        driver.set_window_size(1280, 720)
+        opts.add_argument("--no-sandbox")
+        opts.add_argument("--disable-dev-shm-usage")
         
         try:
-            log_console("🚀 Sentinel v7.5 Ghost Protocol Active.")
-            driver.get("https://www.roblox.com")
+            log_console("🚀 Sentinel v7.6 Ghost Protocol Active.")
+            self.driver = webdriver.Chrome(options=opts) # ASSIGNMENT FIX
+            self.driver.set_window_size(1280, 720)
+            self.driver.get("https://www.roblox.com")
             
             while True:
-                # 1. Safety Check (Highest Priority)
                 self.watchdog.scan_threats()
-                
-                # 2. Evolution
                 self.evolution.load_new_skills()
                 self.evolution.trigger_evolution()
                 
-                # 3. Human-like Idle Behavior
                 if random.random() < 0.05:
-                    # Random "Looking around"
                     x = random.randint(200, 1000)
                     y = random.randint(200, 600)
                     self.human.move_mouse_human(x, y)
                 
-                # 4. Anti-AFK Humanized
                 if random.random() < 0.02:
                     pyautogui.press('space')
-                    time.sleep(random.uniform(0.5, 1.5)) # Dừng lại sau khi nhảy
+                    time.sleep(random.uniform(0.5, 1.5))
                 
-                time.sleep(random.uniform(2.0, 5.0)) # Random loop delay
+                time.sleep(random.uniform(2.0, 5.0))
                 
         except SystemExit:
             log_console("🛡️ Safe Exit Completed.")
         except Exception as e:
             log_console(f"🔥 CRASH: {e}")
-            requests.post(f"{BRAIN_URL}/self_heal", json={"traceback": traceback.format_exc()})
-        finally:
-            try: driver.quit()
+            trace = traceback.format_exc()
+            try: requests.post(f"{BRAIN_URL}/self_heal", json={"traceback": trace})
             except: pass
+        finally:
+            if self.driver:
+                try: self.driver.quit()
+                except: pass
 
 if __name__ == "__main__":
     if not os.environ.get("DISPLAY"):
