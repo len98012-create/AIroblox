@@ -2,149 +2,128 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
-const SENTINEL_THEME = {
-  bg: '#050505',
-  card: '#0d0d0f',
-  accent: '#00f2ff',
-  danger: '#ff2d55',
-  success: '#34c759',
-  warning: '#ffcc00',
-  text: '#ffffff',
-  dim: '#a0a0a0',
+const THEME = {
+  bg: '#020202',
+  panel: '#0a0a0c',
+  primary: '#00f2ff', // Cyan
+  secondary: '#7000ff', // Purple
+  success: '#00ff9d',
+  danger: '#ff0055',
+  text: '#e0e0e0',
+  mono: '"Fira Code", monospace'
 };
 
 const Header = () => (
   <header style={{
-    padding: '1rem 2.5rem',
-    borderBottom: `2px solid ${SENTINEL_THEME.accent}44`,
+    padding: '1.5rem',
+    borderBottom: `1px solid ${THEME.primary}33`,
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    background: `linear-gradient(180deg, ${SENTINEL_THEME.card} 0%, transparent 100%)`,
-    position: 'sticky',
-    top: 0,
-    zIndex: 100,
-    backdropFilter: 'blur(10px)',
+    background: `linear-gradient(90deg, ${THEME.panel} 0%, rgba(0,0,0,0) 100%)`
   }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
       <div style={{
-        width: '14px',
-        height: '14px',
-        borderRadius: '50%',
-        background: SENTINEL_THEME.success,
-        boxShadow: `0 0 15px ${SENTINEL_THEME.success}`,
-        animation: 'pulse 1.5s infinite',
+        width: '12px', height: '12px', background: THEME.primary,
+        borderRadius: '50%', boxShadow: `0 0 10px ${THEME.primary}`
       }} />
-      <h1 style={{ 
-        fontSize: '1.4rem', 
-        fontWeight: '900', 
-        letterSpacing: '4px', 
-        color: SENTINEL_THEME.accent,
-        textShadow: `0 0 10px ${SENTINEL_THEME.accent}66`
-      }}>
-        SENTINEL SRE
+      <h1 style={{ fontFamily: THEME.mono, fontSize: '1.2rem', color: THEME.text, letterSpacing: '2px' }}>
+        SENTINEL <span style={{ color: THEME.primary }}>V7.7.0</span>
       </h1>
     </div>
-    <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-      <div style={{ fontSize: '0.75rem', color: SENTINEL_THEME.dim, letterSpacing: '1px' }}>
-        DISCORD LINK: <span style={{ color: SENTINEL_THEME.success }}>ACTIVE</span>
-      </div>
-      <div style={{ fontSize: '0.75rem', color: SENTINEL_THEME.dim }}>
-        UPTIME: <span style={{ color: SENTINEL_THEME.accent }}>14:22:05</span>
-      </div>
+    <div style={{ fontFamily: THEME.mono, fontSize: '0.8rem', color: '#666' }}>
+      PROTOCOL: <span style={{ color: THEME.success }}>CYBER-WRAITH</span>
     </div>
   </header>
 );
 
-const MetricCard = ({ label, value, color = SENTINEL_THEME.accent, trend = null }) => (
-  <div style={{
-    background: SENTINEL_THEME.card,
-    padding: '1.5rem',
-    borderRadius: '12px',
-    border: `1px solid ${color}33`,
-    flex: 1,
-    boxShadow: `inset 0 0 20px ${color}05`,
-  }}>
-    <div style={{ fontSize: '0.65rem', color: SENTINEL_THEME.dim, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
-      {label}
-    </div>
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-      <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: color }}>
-        {value}
-      </div>
-      {trend && <div style={{ fontSize: '0.7rem', color: SENTINEL_THEME.success }}>{trend}</div>}
-    </div>
-  </div>
-);
-
-const LogEntry = ({ timestamp, message, type = 'info' }) => (
-  <div style={{
-    padding: '0.75rem 1rem',
-    borderLeft: `3px solid ${type === 'error' ? SENTINEL_THEME.danger : type === 'success' ? SENTINEL_THEME.success : SENTINEL_THEME.accent}`,
-    marginBottom: '0.5rem',
-    fontSize: '0.85rem',
-    background: `${SENTINEL_THEME.card}`,
-    fontFamily: '"JetBrains Mono", monospace',
-    borderRadius: '0 4px 4px 0',
-  }}>
-    <span style={{ color: SENTINEL_THEME.dim, marginRight: '1rem' }}>[{timestamp}]</span>
-    <span style={{ color: type === 'error' ? SENTINEL_THEME.danger : SENTINEL_THEME.text }}>{message}</span>
-  </div>
-);
-
-export default function SentinelDashboard() {
-  const [logs, setLogs] = useState([
-    { ts: '10:00:23', msg: '🚀 Sentinel v7.6.2 Ghost Protocol Active.', type: 'info' },
-    { ts: '10:00:39', msg: '✨ Learned: skill_whale_hunter', type: 'success' },
-    { ts: '10:00:58', msg: '🏪 PLS DONATE: Page Loaded.', type: 'success' },
-    { ts: '10:01:05', msg: '📡 DISCORD: Startup Embed Sent.', type: 'info' },
-    { ts: '10:10:20', msg: '🚨 THREAT DETECTED: report context found.', type: 'error' },
-    { ts: '10:10:21', msg: '📡 DISCORD: Sending Critical Alert...', type: 'info' },
-  ]);
-  const [aiAnalysis, setAiAnalysis] = useState('Monitoring for Whale Activity and Admin presence.');
-  const [analyzing, setAnalyzing] = useState(false);
-  const logEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [logs]);
+const LogViewer = ({ logs }) => {
+  const endRef = useRef<HTMLDivElement>(null);
+  useEffect(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), [logs]);
 
   return (
     <div style={{
-      minHeight: '100vh',
-      background: SENTINEL_THEME.bg,
-      color: SENTINEL_THEME.text,
-      fontFamily: 'Inter, sans-serif',
-      display: 'flex',
-      flexDirection: 'column',
+      background: '#000',
+      border: `1px solid ${THEME.primary}22`,
+      borderRadius: '8px',
+      height: '400px',
+      overflowY: 'auto',
+      padding: '1rem',
+      fontFamily: THEME.mono,
+      fontSize: '0.85rem'
     }}>
-      <Header />
-      <main style={{ padding: '2rem', flex: 1, display: 'grid', gridTemplateColumns: '320px 1fr', gap: '2.5rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <MetricCard label="Global Status" value="WATCHING" color={SENTINEL_THEME.warning} />
-          <MetricCard label="Discord Link" value="CONNECTED" color={SENTINEL_THEME.success} />
-          <MetricCard label="Kill Switch" value="ARMED" color={SENTINEL_THEME.danger} />
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{
-            background: '#000000',
-            borderRadius: '12px',
-            border: `1px solid ${SENTINEL_THEME.dim}22',
-            flex: 1,
-            overflowY: 'auto',
-            padding: '1.5rem',
-            maxHeight: 'calc(100vh - 250px)',
+      {logs.map((l, i) => (
+        <div key={i} style={{ marginBottom: '6px', display: 'flex', gap: '10px' }}>
+          <span style={{ color: '#555' }}>[{l.time}]</span>
+          <span style={{ 
+            color: l.type === 'error' ? THEME.danger : l.type === 'success' ? THEME.success : THEME.text 
           }}>
-            {logs.map((log, i) => (
-              <LogEntry key={i} timestamp={log.ts} message={log.msg} type={log.type} />
-            ))}
-            <div ref={logEndRef} />
-          </div>
-          <div style={{ textAlign: 'center', color: SENTINEL_THEME.dim, fontSize: '0.7rem' }}>
-             ALERTS CONFIGURED FOR: {process.env.DISCORD_WEBHOOK ? 'HIDDEN_WEBHOOK' : 'MISSING_SECRET'}
-          </div>
+            {l.msg}
+          </span>
         </div>
+      ))}
+      <div ref={endRef} />
+    </div>
+  );
+};
+
+export default function Dashboard() {
+  const [logs, setLogs] = useState([
+    { time: '10:00:01', msg: 'System initialized.', type: 'info' },
+    { time: '10:00:05', msg: 'Connected to Brain (Gemini 2.0).', type: 'success' },
+    { time: '10:01:20', msg: 'Ghost Protocol active. Mouse spline loaded.', type: 'info' },
+  ]);
+
+  return (
+    <div style={{ minHeight: '100vh', background: THEME.bg, color: THEME.text }}>
+      <Header />
+      <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem' }}>
+        
+        {/* Main Log Area */}
+        <section>
+          <h2 style={{ fontFamily: THEME.mono, fontSize: '1rem', marginBottom: '1rem', color: THEME.primary }}>
+            > LIVE_TERMINAL_FEED
+          </h2>
+          <LogViewer logs={logs} />
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+            <div style={{ padding: '1rem', background: THEME.panel, borderLeft: `3px solid ${THEME.secondary}` }}>
+              <div style={{ fontSize: '0.7rem', color: '#888' }}>MEMORY USAGE</div>
+              <div style={{ fontSize: '1.5rem', fontFamily: THEME.mono }}>248 MB</div>
+            </div>
+            <div style={{ padding: '1rem', background: THEME.panel, borderLeft: `3px solid ${THEME.success}` }}>
+              <div style={{ fontSize: '0.7rem', color: '#888' }}>UPTIME</div>
+              <div style={{ fontSize: '1.5rem', fontFamily: THEME.mono }}>00:42:15</div>
+            </div>
+          </div>
+        </section>
+
+        {/* Sidebar */}
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ padding: '1.5rem', background: THEME.panel, borderRadius: '8px', border: `1px solid ${THEME.danger}44` }}>
+            <h3 style={{ margin: 0, fontSize: '0.9rem', color: THEME.danger }}>THREAT LEVEL</h3>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '0.5rem' }}>LOW</div>
+          </div>
+
+          <div style={{ padding: '1.5rem', background: THEME.panel, borderRadius: '8px' }}>
+            <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: THEME.primary }}>SYSTEM HEALTH</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Vision Core</span>
+                <span style={{ color: THEME.success }}>ONLINE</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Brain Link</span>
+                <span style={{ color: THEME.success }}>STABLE</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Recovery</span>
+                <span style={{ color: '#aaa' }}>IDLE</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
       </main>
     </div>
   );
