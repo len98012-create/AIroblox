@@ -1,12 +1,20 @@
-# Project: Sentinel V35 Dual Memory
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-### 📋 Cấu trúc Dự án
-- **Agent**: `sentinel_agent/` - Xử lý tác vụ Roblox.
-- **Memory**: `memory/` - Lưu trữ trí tuệ nhân tạo cục bộ.
-- **Key 9**: Cơ chế tự học và lưu file tự động.
+# Run and deploy your AI Studio app
 
-### 🔐 Bảo mật
-- Tích hợp `ROBLOX_COOKIE` và `DISCORD_WEBHOOK` qua bộ nhớ AI bảo mật.
+This contains everything you need to run your app locally.
 
-### 🚀 Cách chạy
-Chạy lệnh: `python launcher.py`
+View your app in AI Studio: https://ai.studio/apps/drive/1eKcXAdgOzgBDooHXLWTHtrrQIMPsAY8w
+
+## Run Locally
+
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

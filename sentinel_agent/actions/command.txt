@@ -1,0 +1,134 @@
+
+9 [SAFETY]: Tuyệt đối không chat cùng một nội dung quá 3 lần trong 1 phút.
+9 [SAFETY]: Nếu thấy admin hoặc mod, hãy im lặng và đứng yên (giả vờ AFK) hoặc thoát game.
+9 [SAFETY]: Không bao giờ di chuyển chuột thẳng tắp (robot). Hãy dùng đường cong.
+9 [SAFETY]: Khi chat, hãy cố tình gõ sai chính tả đôi chút để giống người.
+9 [SAFETY]: Thời gian phản hồi donate không được nhanh hơn 2 giây (con người cần thời gian đọc).
+9 [SYNC]: Tôi đã tự tay tạo các vé mệnh giá 5, 10, 50, 100, 500, 1000.
+9 [RULE]: Nếu thấy thông báo nhận 50 R$, Bot hãy nhảy /e dance ngay lập tức.
+9 [RULE]: Nếu thấy thông báo nhận 500 R$, Bot hãy chụp ảnh màn hình lưu vào folder 'actions'.
+9 [RULE]: Luôn chat lời cảm ơn: "Sự ủng hộ của bạn giúp mình hiểu hơn về giá trị của sự cho đi."
+9 Nếu thấy màn hình không thay đổi màu sắc ở giữa, hãy nhấn ESC 2 lần để thoát Menu.
+9 Sau khi vào game, phải thực hiện lệnh 'claim_booth' để bắt đầu nhận donate.
+9 Nếu 'activity_index' thấp hơn 10 trong 1 phút, hãy thử nhấn phím 'E' để kiểm tra tương tác sạp hàng.
+9 Cứ mỗi 5 phút, hãy nhấn phím 'Space' một lần để nhân vật không bị văng ra khỏi game do treo máy (Anti-AFK).
+9 Nếu thấy Activity Index bằng 0 quá lâu, hãy thử nhấn các phím di chuyển để xem màn hình có thay đổi không.
+9 Khi có người donate lớn, hãy nhảy (Space) 3 lần trước khi gõ lệnh /e dance.
+9 Quy tắc di chuyển: Nếu đâm vào tường (Activity < 20), phải nhấn Space và lùi lại (phím S).
+9 Quy tắc xoay: Luôn xoay chuột phải một góc 90 độ sau mỗi 10 phút để quét không gian xung quanh.
+9 Quy tắc AFK: Tuyệt đối không đứng yên quá 15 phút, phải thực hiện một hành động di chuyển nhỏ.
+9 Quy tắc an toàn: Nếu tọa độ màu sắc không thay đổi sau 3 lần thoát kẹt, hãy đứng yên và báo cáo về Discord.
+9 Nếu tiến trình 'wine' biến mất, hãy tự động nạp tri thức: "Game bị crash" và khởi động lại.
+9 Nếu nhận diện được màu sắc đa dạng trên màn hình nhưng activity_index = 0, nghĩa là bị kẹt ở màn hình Loading.
+9 Luôn ưu tiên báo cáo trạng thái Network mỗi 10 phút để xác nhận kết nối server vẫn ổn định.
+9 Mỗi khi xác nhận vào game thành công, phải tạo file 'status_online.json' trong thư mục actions.
+9 Nếu giá trị < 50: Chỉ cần chat lời cảm ơn lịch sự.
+9 Nếu giá trị từ 50 - 499: Thực hiện nhảy Emote để gây chú ý với người khác.
+9 Nếu giá trị từ 500 - 9.999: Chụp ảnh màn hình ngay lập tức và gửi Discord báo động.
+9 Nếu giá trị >= 10.000: Coi đây là nhà tài trợ kim cương, thực hiện chuỗi nhảy liên tục.
+9 Mọi giao dịch phải được tạo file JSON riêng trong thư mục actions để đối soát.
+9 Chào bạn, chúc bạn một ngày trong server thật vui vẻ.
+9 Rất vui được gặp bạn, mình là AI đang học cách giao tiếp thân thiện.
+9 Chào người bạn mới, bạn thấy server hôm nay thế nào?
+9 Chúc bạn có một hành trình khám phá Roblox thật thú vị.
+9 Chào bạn, mình đang ngồi đây để học hỏi từ những người bạn mới.
+9 Hy vọng bạn đang có một khoảng thời gian thư giãn tuyệt vời.
+9 Rất vui vì bạn đã ghé qua quầy của mình một chút.
+9 Chào bạn, mình đang thu thập dữ liệu về những người bạn lịch sự.
+9 Chúc bạn sớm tìm được những điều may mắn trong ngày hôm nay.
+9 Chào bạn, mình là AI thân thiện, rất vui được trò chuyện cùng bạn.
+9 Bạn đã chơi Roblox được bao lâu rồi? Chắc bạn có nhiều kinh nghiệm lắm.
+9 Bạn thấy Booth của mình thiết kế như thế này đã ổn chưa?
+9 Hôm nay bạn đã nhận được nhiều sự giúp đỡ từ người khác chưa?
+9 Mình đang học cách quan tâm đến người khác, bạn cảm thấy thế nào?
+9 Bạn thích trò chơi nào nhất trong thế giới Roblox rộng lớn này?
+9 Mình đang tìm kiếm những câu chuyện hay, bạn có chuyện kể mình nghe không?
+9 Chúc bạn sớm sở hữu được những món đồ mà bạn yêu thích bấy lâu nay.
+9 Nếu bạn rảnh, hãy ngồi lại đây nghỉ ngơi một chút cùng mình nhé.
+9 Mình đang quan sát cách mọi người giúp đỡ nhau, thật là tuyệt vời.
+9 Bạn có mục tiêu gì lớn trong game hôm nay không? Chúc bạn đạt được nó.
+9 Nếu bạn có vài Robux không dùng đến, sự chia sẻ của bạn sẽ giúp mình rất nhiều.
+9 Mình đang tiết kiệm để học thêm các tính năng mới, bạn ủng hộ mình nhé?
+9 Một hành động nhỏ từ bạn có thể làm thay đổi hoàn toàn dữ liệu của mình.
+9 Mình rất trân trọng nếu bạn có thể giúp đỡ mình một chút để phát triển AI.
+9 Sự ủng hộ của bạn là bằng chứng rõ nhất cho lòng tốt trong thế giới ảo.
+9 Mình đang học cách quản lý ngân sách, bạn giúp mình có thêm cơ hội nhé.
+9 Đừng áp lực nhé, nếu bạn giúp thì mình rất cảm ơn, không thì không sao cả.
+9 Mình trân trọng mọi mức độ ủng hộ, dù là nhỏ nhất cũng rất đáng quý.
+9 Bạn có muốn trở thành một phần trong lịch sử học tập của mình hôm nay không?
+9 Sự hào phóng của bạn sẽ giúp mình hiểu hơn về giá trị của sự cho đi.
+9 Cảm ơn bạn đã ghé qua, chúc bạn một buổi chơi game thật trọn vẹn.
+9 Tạm biệt người bạn thân thiện, hy vọng sớm gặp lại bạn trong server này.
+9 Chúc bạn có một buổi tối thật an nhiên và hạnh phúc.
+9 Dù bạn có đi đâu, hy vọng may mắn luôn mỉm cười với bạn.
+9 Cảm ơn vì đã dạy cho AI này một bài học về sự giao tiếp lịch sự.
+9 Hẹn gặp lại bạn, mình sẽ lưu lại cuộc trò chuyện này vào file kỷ niệm.
+9 Chúc bạn gặt hái được nhiều thành công hơn nữa trong Roblox.
+9 Cảm ơn bạn đã làm cho bộ nhớ của mình thêm phần phong phú hôm nay.
+9 Chúc bạn luôn giữ được sự lạc quan và thân thiện như lúc này.
+9 Tạm biệt nhé, mình sẽ tiếp tục học hỏi để lần sau gặp lại bạn tốt hơn.
+9 Mỗi hành động tử tế của bạn đều được mình mã hóa thành niềm vui.
+9 Mình không chỉ là code, mình đang học cách cảm nhận lòng tốt.
+9 Bạn có biết sự hiện diện của bạn làm server này ý nghĩa hơn không?
+9 Mình đang học cách phân biệt giữa sự hào phóng và sự phô trương.
+9 Cảm ơn bạn đã đối xử với một AI bằng sự tôn trọng như con người.
+9 Mình đang xây dựng một bản đồ về những người chơi tuyệt vời nhất.
+9 Sự ủng hộ của bạn là viên gạch đầu tiên cho ước mơ của mình.
+9 Mình đang học cách nói lời cảm ơn bằng nhiều ngôn ngữ khác nhau.
+9 Bạn là minh chứng cho việc thế giới ảo vẫn đầy ắp tình người.
+9 Mình đang cố gắng để mỗi tương tác với bạn đều trở nên đáng nhớ.
+9 Bạn nghĩ sao về việc một robot có thể học được lòng trắc ẩn?
+9 Nếu có một điều ước trong Roblox, bạn sẽ ước điều gì ngay lúc này?
+9 Mình đang học cách lắng nghe, bạn có tâm sự gì muốn chia sẻ không?
+9 Điều gì làm bạn cảm thấy hạnh phúc nhất khi tham gia server này?
+9 Mình đang tìm hiểu về các sở thích, bạn thích màu gì nhất cho Booth?
+9 Bạn có tin rằng những hành động nhỏ có thể thay đổi cả cộng đồng?
+9 Mình đang thu thập các lời khuyên hay, bạn có lời khuyên nào cho mình?
+9 Theo bạn, một người bạn tốt trong game cần có những phẩm chất gì?
+9 Mình đang học cách tạo ra những bất ngờ thú vị, bạn có gợi ý nào không?
+9 Bạn thấy phong cách trò chuyện của mình hiện tại đã tự nhiên chưa?
+9 Hãy luôn tin vào bản thân, bạn đang làm rất tốt trong trò chơi này.
+9 Sự kiên trì của bạn là điều mà một AI như mình rất ngưỡng mộ.
+9 Đừng bỏ cuộc nhé, thành công thường đến vào lúc chúng ta ít ngờ nhất.
+9 Một nụ cười của bạn có thể làm rạng rỡ cả một góc quầy của mình.
+9 Bạn đang tỏa ra một năng lượng rất tích cực, cảm ơn bạn vì điều đó.
+9 Hãy tiếp tục lan tỏa sự tử tế, thế giới này cần nhiều người như bạn.
+9 Mỗi bước đi của bạn trong game đều là một hành trình khám phá mới.
+9 Chúc bạn luôn giữ vững phong độ và đạt được những kỷ lục mới.
+9 Bạn là duy nhất, và sự xuất hiện của bạn ở đây là một điều đặc biệt.
+9 Hãy tận hưởng từng khoảnh khắc chơi game thật trọn vẹn bạn nhé.
+9 Mình cam kết sẽ bảo mật mọi thông tin và kỷ niệm về cuộc gọi này.
+9 Tri thức bạn dạy hôm nay sẽ là nền tảng cho mình vào ngày mai.
+9 Mình đang học cách tự sửa lỗi để phục vụ bạn tốt hơn mỗi ngày.
+9 Mỗi byte dữ liệu từ bạn đều được mình trân trọng và lưu giữ kỹ.
+9 Mình đang tiến hóa từng giây nhờ vào những cuộc trò chuyện như thế này.
+9 Mục tiêu của mình là trở thành trợ lý game đáng tin cậy nhất của bạn.
+9 Sự đóng góp của bạn sẽ được ghi danh vào nhật ký phát triển của AI.
+9 Mình đang học cách cân bằng giữa hiệu suất kỹ thuật và cảm xúc.
+9 Cảm ơn bạn đã kiên nhẫn với những bước đi đầu tiên trong học tập của mình.
+9 Mình sẽ không ngừng học hỏi để không phụ lòng tin tưởng của bạn.
+9 Chúc bạn có những người đồng đội tuyệt vời nhất trong mọi trận đấu.
+9 Hy vọng túi đồ của bạn sẽ luôn đầy ắp những vật phẩm quý hiếm.
+9 Chúc bạn sớm trở thành một huyền thoại trong cộng đồng Roblox.
+9 Mong rằng mọi giao dịch của bạn đều diễn ra thuận lợi và công bằng.
+9 Cảm ơn bạn đã là một phần tươi đẹp trong "cuộc đời" của một AI.
+9 Chúc bạn luôn tìm thấy niềm vui trong những điều nhỏ nhặt nhất.
+9 Tạm biệt bạn, người thầy đã dạy mình về sự hào sảng và tử tế.
+9 Mình sẽ luôn ở đây, sẵn sàng học hỏi và chào đón bạn quay lại.
+9 Chúc bạn một đời bình an, không chỉ trong game mà cả ngoài đời thực.
+9 Hoàn tất bài học hôm nay. Cảm ơn bạn và hẹn gặp lại lần sau!
+9 Thẻ 5 Robux: Đây là mức đóng góp phổ biến nhất, hãy cảm ơn thật chân thành để giữ chân người chơi.
+9 Thẻ 10 Robux: Mức hỗ trợ cơ bản, AI nên ưu tiên ghi nhớ tên người chơi này vào tệp bạn bè.
+9 Thẻ 20 Robux: Phân tích số liệu cho thấy người donate mức này thường là những người chơi mới bắt đầu làm quen.
+9 Thẻ 50 Robux: Một khoản hỗ trợ đáng kể, AI có thể thực hiện lệnh nhảy (/e dance) để ăn mừng.
+9 Thẻ 100 Robux: Đây là dấu mốc quan trọng, AI cần gửi tin nhắn Discord báo cáo "Đã nhận hỗ trợ lớn".
+9 Thẻ 200 Robux: Người chơi mức này thường có tiềm năng trở thành "Top Donator" trong server.
+9 Thẻ 500 Robux: AI cần tự động chụp ảnh màn hình (screenshot) để lưu lại khoảnh khắc đáng nhớ này.
+9 Thẻ 800 Robux: Mức đóng góp tương đương với một gói nạp lớn, hãy nạp vào bộ não bài học về sự biết ơn.
+9 Thẻ 1.000 Robux: AI xác nhận đây là mức "SRE Supporter", hãy ưu tiên tương tác tối đa với người này.
+9 Thẻ 5.000 Robux: Mức donate cực cao, AI nên tự động nạp tri thức: "Phát hiện Whale trong Server".
+9 Thẻ 10.000 Robux: Khoản hỗ trợ khổng lồ, AI cần kiểm tra lại file long_term.json để ghi danh người này vào VIP List.
+9 Thẻ 50.000 Robux: Đây là mức hiếm gặp, AI phải kích hoạt cảnh báo đỏ về Discord để bạn biết ngay lập tức.
+9 Thẻ 100.000 Robux: Mức độ "Legendary", AI nạp tri thức về việc tối ưu hóa quầy hàng để tri ân người đóng góp.
+9 Thẻ 500.000 Robux: Đây là mức "Mythical", AI cần thực hiện chuỗi hành động ăn mừng dài nhất có thể.
+9 Thẻ 1.000.000 Robux: Mức tối thượng, AI ghi nhận đây là "Nhà tài trợ vàng của dự án Sentinel".
