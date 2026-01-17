@@ -1,12 +1,12 @@
 
 #!/usr/bin/env python3
 """
-Sentinel Infinite Engine v7.6 (Ghost Protocol - Fixed Driver)
+Sentinel Infinite Engine v7.6.1 (Ghost Protocol - Robust Vision)
 =========================================================
 Features:
-1. Fixed Driver Injection: Skills now have access to self.driver.
-2. Human Motor Control: Mouse overshoot, jitter, variable speed.
-3. Evolution Loop: Self-coding capabilities.
+1. Robust Screenshot: PyAutoGUI + Scrot fallback.
+2. Fixed Driver Injection: Skills now have access to self.driver.
+3. Human Motor Control: Mouse overshoot, jitter, variable speed.
 
 Author: Sentinel SRE Team
 """
@@ -120,15 +120,22 @@ class GhostHumanizer:
 
 # --- MODULE: VISION & SAFETY ---
 class VisionEngine:
-    def capture_screen(self):
-        return cv2.cvtColor(np.array(pyautogui.screenshot()), cv2.COLOR_RGB2BGR)
+    def __init__(self, agent):
+        self.agent = agent
+
+    def capture_screen(self, save_path="/tmp/sentinel_vision.png"):
+        self.agent.take_screenshot(save_path)
+        return cv2.imread(save_path)
     
     def read_text(self):
         try:
-            img = np.array(pyautogui.screenshot())
-            gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+            save_path = "/tmp/ocr_capture.png"
+            self.agent.take_screenshot(save_path)
+            img = cv2.imread(save_path)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             return pytesseract.image_to_string(gray).strip().lower()
-        except: return ""
+        except Exception as e: 
+            return ""
 
 class AdminWatchdog:
     def __init__(self, agent):
@@ -188,21 +195,34 @@ class EvolutionManager:
 class SentinelAgent:
     def __init__(self):
         self.human = GhostHumanizer()
-        self.vision = VisionEngine()
+        self.vision = VisionEngine(self)
         self.watchdog = AdminWatchdog(self)
         self.evolution = EvolutionManager(self)
         self.pg = pyautogui
-        self.driver = None # INITIALIZED FIX
+        self.driver = None
+
+    def take_screenshot(self, path):
+        """Robust screenshot with scrot fallback for Linux environments"""
+        try:
+            # Try PyAutoGUI/Pillow first
+            self.pg.screenshot(path)
+        except Exception:
+            # Fallback to scrot system command
+            try:
+                os.system(f"scrot -q 100 {path} > /dev/null 2>&1")
+            except Exception as e:
+                log_console(f"Screenshot Fail: {e}")
 
     def run(self):
         opts = Options()
         opts.add_argument("--mute-audio")
         opts.add_argument("--no-sandbox")
         opts.add_argument("--disable-dev-shm-usage")
+        opts.add_argument("--window-size=1280,720")
         
         try:
-            log_console("🚀 Sentinel v7.6 Ghost Protocol Active.")
-            self.driver = webdriver.Chrome(options=opts) # ASSIGNMENT FIX
+            log_console("🚀 Sentinel v7.6.1 Ghost Protocol Active.")
+            self.driver = webdriver.Chrome(options=opts)
             self.driver.set_window_size(1280, 720)
             self.driver.get("https://www.roblox.com")
             
