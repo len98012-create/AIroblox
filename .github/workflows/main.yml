@@ -28,16 +28,20 @@ jobs:
         uses: actions/cache@v3
         with:
           path: libs
-          key: sentinel-libs-v7-${{ runner.os }}-${{ hashFiles('**/app.py') }}
+          key: sentinel-libs-v7-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             sentinel-libs-v7-${{ runner.os }}-
 
-      - name: 🛠️ System Dependencies
+      - name: 🛠️ System Dependencies & Cleanup
         run: |
+          # Dọn dẹp các tiến trình cũ nếu có (Tránh lỗi Port 9222)
+          sudo pkill -9 chrome || true
+          sudo pkill -9 chromium || true
+          
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends \
             chromium-browser xvfb fluxbox xauth scrot tesseract-ocr \
-            python3-tk python3-dev libx11-dev gnome-screenshot > /dev/null
+            python3-tk python3-dev libx11-dev > /dev/null
           
           mkdir -p libs memory/action_steps logs/screenshots extensions
           touch $XAUTHORITY
@@ -45,35 +49,37 @@ jobs:
 
       - name: 📦 Python Core Install
         run: |
-          pip install -q -U -t libs \
-            google-genai flask requests pyautogui Pillow \
+          # Sửa lỗi thụt lề từ bản gốc của bạn
+          pip install --target=libs google-genai flask requests pyautogui Pillow \
             selenium psutil pytesseract opencv-python-headless \
-            webdriver-manager # THÊM DÒNG NÀY
+            webdriver-manager 
+
       - name: 🚀 Launch Sentinel v7.7
         run: |
-          # 1. Khởi tạo Display ảo
+          # 1. Khởi tạo Display ảo với độ phân giải chuẩn
           Xvfb :99 -screen 0 1280x720x24 -ac +extension RANDR > /dev/null 2>&1 &
           sleep 3
           fluxbox > /dev/null 2>&1 &
           
-          # 2. Chạy Brain Service (Ngầm) và lưu PID
-          python3 -u brain_service/app.py > logs/brain.log 2>&1 &
-          BRAIN_PID=$!
-          echo "🧠 Brain Service started (PID: $BRAIN_PID)"
+          # 2. Chạy Brain Service (Ngầm)
+          if [ -f "brain_service/app.py" ]; then
+            python3 -u brain_service/app.py > logs/brain.log 2>&1 &
+            BRAIN_PID=$!
+            echo "🧠 Brain Service started (PID: $BRAIN_PID)"
+          fi
           sleep 5
           
-          # 3. Chạy Agent chính (Foreground) - KHÔNG DÙNG & Ở ĐÂY
+          # 3. Chạy Agent chính (Foreground)
           if [ -f "sentinel_v35_dual_memory.py" ]; then
             echo "🚀 Sentinel Agent is taking control..."
-            # Chạy trực tiếp để GitHub Actions phải đợi script này hoàn thành
             python3 -u sentinel_v35_dual_memory.py 2>&1 | tee logs/agent_runtime.log
           else
             echo "❌ Critical Error: Agent file missing!"
             exit 1
           fi
 
-          # 4. Giữ session cho đến khi Brain hoặc Agent kết thúc
-          wait $BRAIN_PID
+          # 4. Đợi Brain Service nếu cần
+          [ -n "$BRAIN_PID" ] && wait $BRAIN_PID
 
       - name: 💾 State Persistence
         if: always()
@@ -81,8 +87,7 @@ jobs:
           git config --global user.name "Sentinel-Auto"
           git config --global user.email "bot@sentinel.io"
           
-          # SỬA LỖI TẠI ĐÂY: Dùng -f để cưỡng bức add các thư mục bị ignore
-          git add -f memory/ logs/ extensions/
-          
-          git commit -m "💾 Auto-Save: $(date)" || echo "No changes to sync"
+          # Cưỡng bức lưu lại toàn bộ dữ liệu học tập và log
+          git add -f memory/ logs/
+          git commit -m "💾 Auto-Save [Key 9]: $(date)" || echo "No changes to sync"
           git push origin main
