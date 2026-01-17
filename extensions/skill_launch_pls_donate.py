@@ -1,35 +1,24 @@
-
-import os
-import time
-import requests
-
 def execute(agent):
-    """Kích hoạt trạng thái đang chơi game Pls Donate"""
-    place_id = "8737899170" 
+    # ID CHÍNH XÁC CỦA PLS DONATE
+    correct_place_id = "8737602449" 
     
-    # Pre-check to avoid spamming the driver
     if hasattr(agent, '_pls_donate_launched'):
         return
     
-    print(f"🚀 [LAUNCHER] Đang nạp phiên chơi cho PlaceID: {place_id}")
+    print(f"🚀 [LAUNCHER] Đang sửa lỗi và nạp lại PlaceID: {correct_place_id}")
     
     if agent.driver:
         try:
-            agent.driver.get(f"https://www.roblox.com/games/{place_id}")
-            time.sleep(10)
+            # Điều hướng đến đúng game
+            agent.driver.get(f"https://www.roblox.com/games/{correct_place_id}")
+            time.sleep(5)
             
-            screenshot_path = "logs/screenshots/lobby_check.png"
-            agent.take_screenshot(screenshot_path)
+            # Kiểm tra đăng nhập trước khi nhấn Play
+            agent.take_screenshot("logs/screenshots/correct_lobby_check.png")
             
-            agent.discord.send(
-                title="🏪 PLS DONATE ACTIVE",
-                description="Successfully loaded game page and confirmed lobby visuals.",
-                color=0x34c759,
-                fields=[
-                    {"name": "PlaceID", "value": place_id, "inline": True},
-                    {"name": "Status", "value": "Waiting for Booth", "inline": True}
-                ]
-            )
+            # Logic nhấn nút Play (nếu đã đăng nhập)
+            # agent.driver.find_element(...).click()
+            
             agent._pls_donate_launched = True
         except Exception as e:
-            print(f"Error launching: {e}")
+            print(f"❌ Error launching: {e}")
