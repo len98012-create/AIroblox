@@ -1,82 +1,15 @@
-
-name: Sentinel_SRE_Turbo_Speed
-
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 */4 * * *'
-
-jobs:
-  run-sentinel:
-    runs-on: ubuntu-latest
-    timeout-minutes: 350
-    permissions:
-      contents: write
-    
-    env:
-      XAUTHORITY: /home/runner/.Xauthority
-      DISPLAY: :99
-      PYTHONPATH: ${{ github.workspace }}/libs
-      ROBLOX_COOKIE: ${{ secrets.ROBLOX_COOKIE }}
-      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      GEMINI_KEY_9: ${{ secrets.GEMINI_KEY_9 }}
-
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
-
-      - name: ⚡ Turbo Cache Libs
-        uses: actions/cache@v3
-        with:
-          path: libs
-          key: sentinel-libs-v7-${{ runner.os }}-${{ hashFiles('**/app.py') }}
-          restore-keys: |
-            sentinel-libs-v7-${{ runner.os }}-
-
-      - name: 🛠️ System Dependencies
+- name: 🚀 Launch Sentinel v7.7
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends \
-            chromium-browser xvfb fluxbox xauth scrot tesseract-ocr \
-            python3-tk python3-dev libx11-dev gnome-screenshot > /dev/null
-          
-          mkdir -p libs memory/action_steps logs/screenshots extensions
-          
-          touch $XAUTHORITY
-          xauth add :99 . $(mcookie)
-
-      - name: 📦 Python Core Install
-        run: |
-          # Install to specific target to keep environment clean
-          if [ ! -d "libs/google" ]; then
-            pip install -q -t libs \
-              google-generativeai \
-              flask \
-              requests \
-              pyautogui \
-              Pillow \
-              selenium \
-              psutil \
-              pytesseract \
-              opencv-python-headless
-          fi
-
-      - name: 🚀 Launch Sentinel v7.7
-        run: |
-          # 1. Display: 24-bit depth is crucial for OpenCV color detection
           Xvfb :99 -screen 0 1280x720x24 -ac +extension RANDR > /dev/null 2>&1 &
           sleep 3
           fluxbox > /dev/null 2>&1 &
           sleep 2
-          
-          # 2. Brain Service (Background)
-          python3 brain_service/app.py & 
-          echo "🧠 Brain Service Initialized..."
+          # Chạy Brain Service với cờ -u để đẩy log ngay lập tức
+          python3 -u brain_service/app.py & 
           sleep 5
-          
-          # 3. Sentinel Agent (Foreground)
+          # Chạy Agent chính
           if [ -f "sentinel_v35_dual_memory.py" ]; then
-            python3 sentinel_v35_dual_memory.py
+            python3 -u sentinel_v35_dual_memory.py
           else
             echo "❌ Critical: Agent file missing!"
             exit 1
@@ -87,6 +20,7 @@ jobs:
         run: |
           git config --global user.name "Sentinel-Auto"
           git config --global user.email "bot@sentinel.io"
-          git add -f memory/ logs/ extensions/
-          git commit -m "💾 Auto-Save: $(date)" || echo "No changes to sync"
-          git push -f
+          # SỬA LỖI: Thêm libs/ vào để cache không bị trống
+          git add -A memory/ logs/ extensions/ libs/ 
+          git commit -m "💾 Sync State: $(date)" || echo "No changes"
+          git push origin main
