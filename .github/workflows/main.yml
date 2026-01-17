@@ -45,13 +45,11 @@ jobs:
 
       - name: 📦 Python Core Install
         run: |
-          # Xóa bỏ các tệp cũ gây xung đột namespace
-          rm -rf libs/google* # Cài đặt chính xác SDK 2026
-          pip install -q -t libs \
+          # Thêm --upgrade để xóa tan các cảnh báo "already exists"
+          pip install -q -U -t libs \
             google-genai \
             flask requests pyautogui Pillow \
             selenium psutil pytesseract opencv-python-headless
-
       - name: 🚀 Launch Sentinel v7.7
         run: |
           Xvfb :99 -screen 0 1280x720x24 -ac +extension RANDR > /dev/null 2>&1 &
