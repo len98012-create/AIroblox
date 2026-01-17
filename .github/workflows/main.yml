@@ -45,11 +45,10 @@ jobs:
 
       - name: 📦 Python Core Install
         run: |
-          # Thêm --upgrade để xóa tan các cảnh báo "already exists"
           pip install -q -U -t libs \
-            google-genai \
-            flask requests pyautogui Pillow \
-            selenium psutil pytesseract opencv-python-headless
+            google-genai flask requests pyautogui Pillow \
+            selenium psutil pytesseract opencv-python-headless \
+            webdriver-manager # THÊM DÒNG NÀY
       - name: 🚀 Launch Sentinel v7.7
         run: |
           # 1. Khởi tạo Display ảo
