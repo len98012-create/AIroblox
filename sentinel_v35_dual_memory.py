@@ -4,7 +4,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from PIL import Image
 
-# --- FIX: Ép in log ngay lập tức để không bị treo console ---
+# --- [KEY 9] LOGGING OPTIMIZATION ---
+# Ép Python in log ngay lập tức để không bị treo console trên GitHub Actions
 sys.stdout.reconfigure(line_buffering=True)
 sys.stderr.reconfigure(line_buffering=True)
 
@@ -23,7 +24,7 @@ class GhostHumanizer:
         start = pyautogui.position()
         control_x = start[0] + random.randint(-100, 100)
         control_y = start[1] + random.randint(-100, 100)
-        steps = random.randint(15, 25) # Giảm bước để chạy mượt hơn trên Runner
+        steps = random.randint(15, 25)
         for i in range(steps):
             t = i / steps
             bx = (1-t)**2 * start[0] + 2*(1-t)*t * control_x + t**2 * x
@@ -54,50 +55,61 @@ class SentinelAgent:
         print(f"📸 Screenshot saved: {path}")
 
     def init_browser(self):
-        print("🌐 [INIT] Starting Headless Chromium...")
+        """[FIXED] Cấu hình vượt lỗi DevToolsActivePort trên GitHub Actions"""
+        print("🌐 [INIT] Starting Headless Chromium (SHM Patch Applied)...")
         opt = Options()
+        
+        # Các tham số sống còn
         opt.add_argument("--headless=new")
         opt.add_argument("--no-sandbox")
-        opt.add_argument("--disable-dev-shm-usage")
+        opt.add_argument("--disable-dev-shm-usage") # Quan trọng nhất: tránh crash SHM
+        opt.add_argument("--disable-gpu")
         opt.add_argument("--window-size=1280,720")
-        opt.binary_location = "/usr/bin/chromium-browser"
+        opt.add_argument("--remote-debugging-port=9222")
+        
+        # Chỉ định binary mặc định trên GitHub Runner
+        opt.binary_location = "/usr/bin/chromium-browser" 
         
         try:
             self.driver = webdriver.Chrome(options=opt)
+            self.driver.set_page_load_timeout(30)
             print("✅ [DRIVER] Browser launched successfully!")
         except Exception as e:
-            print(f"❌ [ERROR] Browser failed: {e}")
+            print(f"❌ [CRITICAL] Browser failed: {e}")
             sys.exit(1)
 
     def login_roblox(self):
         if not self.cookie:
-            print("⚠️ [LOGIN] No Cookie found in Environment!")
+            print("⚠️ [LOGIN] No Cookie found!")
             return
         
-        print("🍪 [LOGIN] Injecting Cookie...")
-        self.driver.get("https://www.roblox.com/home")
-        time.sleep(3)
-        self.driver.add_cookie({
-            "name": ".ROBLOSECURITY",
-            "value": self.cookie,
-            "domain": ".roblox.com"
-        })
-        self.driver.refresh()
-        time.sleep(5)
-        self.take_screenshot("logs/login_status.png")
+        try:
+            print("🍪 [LOGIN] Injecting Cookie...")
+            self.driver.get("https://www.roblox.com/home")
+            time.sleep(3)
+            self.driver.add_cookie({
+                "name": ".ROBLOSECURITY",
+                "value": self.cookie,
+                "domain": ".roblox.com"
+            })
+            self.driver.refresh()
+            time.sleep(5)
+            self.take_screenshot("logs/login_status.png")
+            print("✅ [LOGIN] Roblox Session Restored.")
+        except Exception as e:
+            print(f"❌ [LOGIN] Failed: {e}")
 
     def run(self):
         self.init_browser()
         self.login_roblox()
         
         print("🚀 [AGENT] System is active. Entering Main Loop...")
-        # Vòng lặp duy trì sự sống
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S")
-            print(f"💓 [HEARTBEAT] {now} - Bot is standing by.")
+            print(f"💓 [HEARTBEAT] {now} - Sentinel is watching.")
             
-            # Giả lập thao tác chống AFK mỗi 2 phút
-            self.human.move_human(random.randint(0, 500), random.randint(0, 500))
+            # Chống AFK cơ bản
+            self.human.move_human(random.randint(100, 600), random.randint(100, 600))
             pyautogui.press('space')
             
             time.sleep(120)
