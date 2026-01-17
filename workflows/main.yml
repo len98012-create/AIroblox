@@ -1,0 +1,66 @@
+name: Sentinel_SRE_Turbo_Speed
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-sentinel:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      XAUTHORITY: /home/runner/.Xauthority
+      DISPLAY: :99
+      PYTHONPATH: ${{ github.workspace }}/libs
+      ROBLOX_COOKIE: ${{ secrets.ROBLOX_COOKIE }}
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      GEMINI_KEY_9: ${{ secrets.GEMINI_KEY_9 }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # CACHE TỐI THƯỢNG: Lưu cả folder cài đặt Apt
+      - name: Turbo Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            /var/cache/apt/archives
+            libs
+          key: turbo-cache-${{ runner.os }}-${{ hashFiles('**/app.py') }}
+
+      - name: Instant Setup
+        run: |
+          # Cài đặt cực nhanh với các flag rút gọn
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends chromium-browser xvfb fluxbox xauth scrot > /dev/null
+          
+          mkdir -p libs memory/action_steps logs/screenshots
+          
+          # Chỉ cài pip nếu libs trống
+          if [ ! -d "libs/selenium" ]; then
+            pip install -q -t libs google-genai requests pyautogui Pillow selenium psutil flask
+          fi
+          
+          touch $XAUTHORITY
+          xauth add :99 . $(mcookie)
+
+      - name: Turbo Run
+        run: |
+          # Giảm độ phân giải để tăng tốc xử lý ảnh
+          Xvfb :99 -screen 0 1280x720x16 -auth $XAUTHORITY > /dev/null 2>&1 &
+          fluxbox > /dev/null 2>&1 &
+          
+          # Chạy song song Brain và Agent (chờ ít hơn)
+          python3 brain_service/app.py & 
+          sleep 1
+          python3 sentinel_v35_dual_memory.py
+
+      - name: Background Sync
+        if: always()
+        run: |
+          git config --global user.name "Sentinel-Turbo"
+          git config --global user.email "sre@sentinel.io"
+          git add memory/ logs/
+          git commit -m "⚡ Turbo Sync: $(date)" || echo "No changes"
+          git push -f # Dùng force push để tránh xung đột tốc độ cao
