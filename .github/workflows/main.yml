@@ -49,10 +49,9 @@ jobs:
 
       - name: 📦 Python Core Install
         run: |
-          # Sửa lỗi thụt lề từ bản gốc của bạn
-          pip install --target=libs google-genai flask requests pyautogui Pillow \
+          pip install --upgrade --target=libs google-genai flask requests pyautogui Pillow \
             selenium psutil pytesseract opencv-python-headless \
-            webdriver-manager 
+            webdriver-manager
 
       - name: 🚀 Launch Sentinel v7.7
         run: |
