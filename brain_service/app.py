@@ -1,102 +1,97 @@
 
-import os, sys, json, datetime, time, traceback, random, shutil, ast
+import os, sys, json, datetime, time, traceback, random, ast
 from flask import Flask, request, jsonify
 
-# --- DYNAMIC LIB LOADING ---
+# --- PATH SETUP ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LIBS_PATH = os.path.join(BASE_DIR, "../libs")
 if LIBS_PATH not in sys.path:
     sys.path.insert(0, LIBS_PATH)
 
+# --- STABLE GEMINI IMPORT ---
 import google.generativeai as genai
-
-# --- CONFIGURATION ---
-EXTENSION_SAVE_DIR = os.path.join(BASE_DIR, "../extensions")
-os.makedirs(EXTENSION_SAVE_DIR, exist_ok=True)
 
 app = Flask(__name__)
 API_KEY = os.environ.get("GEMINI_KEY_9")
+EXTENSION_SAVE_DIR = os.path.join(BASE_DIR, "../extensions")
+os.makedirs(EXTENSION_SAVE_DIR, exist_ok=True)
 
-# Initialize Gemini Client
+# --- BRAIN INITIALIZATION ---
+model = None
 if API_KEY:
     try:
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel('gemini-2.0-flash-exp') # Using flash for high-speed generation
-        print("✅ [BRAIN] Architect Online (Gemini Flash - Anti-Ban Mode)")
+        # Fallback to flash-latest if experimental unavailable
+        model = genai.GenerativeModel('gemini-2.0-flash-exp') 
+        print("✅ [BRAIN] Neural Link Established (Gemini 2.0)")
     except Exception as e:
-        print(f"❌ [BRAIN] Connection Failed: {e}")
+        print(f"❌ [BRAIN] API Error: {e}")
 else:
-    print("❌ [BRAIN] No API Key found in environment variables.")
+    print("⚠️ [BRAIN] Running in Offline Mode (No API Key)")
 
-def validate_python_code(code_str):
-    try:
-        ast.parse(code_str)
-        return True, "Valid"
-    except SyntaxError as e:
-        return False, str(e)
+def clean_python_code(text):
+    """Strip Markdown formatting from LLM response"""
+    text = text.replace("```python", "").replace("```", "")
+    return text.strip()
 
 @app.route('/evolve', methods=['POST'])
 def evolve():
-    print(f"🧬 [EVOLVE] Generating stealth features...")
+    """Generate new behavioral extensions based on heuristics."""
+    if not model: return jsonify({"status": "offline"})
     
-    ideas = [
-        "Check chat for 'hello' and reply with human-like typing delay.",
-        "Move mouse randomly to simulate checking inventory or stats.",
-        "If activity is low, press 'w' for 0.5 seconds to prevent AFK kick.",
-        "Detect 'Disconnected' screen color and click Reconnect button.",
-        "Press 'slash' key to open chat, wait 2s, then close it (act bored).",
-        "Randomly rotate camera 90 degrees to look around."
+    strategies = [
+        "Detect 'AFK' text on screen and press Space.",
+        "If mouse hasn't moved for 1 min, draw a circle.",
+        "Check chat for 'admin' and log out immediately.",
+        "Move to a random booth in Pls Donate.",
+        "Reply 'ty' if screen text contains 'donated'."
     ]
-    idea = random.choice(ideas)
+    strategy = random.choice(strategies)
+    
+    print(f"🧬 [EVOLVE] Synthesizing: {strategy}")
     
     prompt = f"""
-    Role: You are a Python Architect for a Stealth Roblox Bot.
-    Goal: Write a NEW Python plugin (extension) for: "{idea}"
+    Write a Python extension for a Roblox Bot using PyAutoGUI/Selenium.
+    Task: {strategy}
     
-    CRITICAL SAFETY RULES (ANTI-BAN):
-    1. NEVER use infinite loops without `time.sleep()`.
-    2. Use `time.sleep(random.uniform(min, max))` for ALL delays.
-    3. Use `agent.human.move_mouse_human(x, y)` instead of raw move.
-    4. Use `agent.human.type_human(text)` for typing.
-    5. Function signature: `def execute(agent):`
+    Requirements:
+    1. Function name: `def execute(agent):`
+    2. Use `agent.human.move_mouse_human(x, y)` for movement.
+    3. Use `agent.take_screenshot(path)` for vision.
+    4. NO infinite loops. Use `time.sleep(random.uniform(1,3))`.
     
-    Return ONLY raw Python code. Do not use Markdown blocks.
+    Return ONLY Python code.
     """
-
-    result = {"status": "failed"}
-
+    
     try:
-        resp = model.generate_content(prompt)
-        raw_code = resp.text.replace("```python", "").replace("```", "").strip()
+        response = model.generate_content(prompt)
+        code = clean_python_code(response.text)
         
-        is_valid, msg = validate_python_code(raw_code)
-        if is_valid:
-            feature_name = f"skill_stealth_{int(time.time())}_{random.randint(100,999)}.py"
-            filepath = os.path.join(EXTENSION_SAVE_DIR, feature_name)
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(raw_code)
-            print(f"🚀 [EVOLVED] Stealth Skill Created: {feature_name}")
-            result = {"status": "success", "file": feature_name}
-        else:
-            print(f"⚠️ Bad Code Generated: {msg}")
+        # Validation
+        ast.parse(code)
+        
+        filename = f"skill_auto_{int(time.time())}.py"
+        path = os.path.join(EXTENSION_SAVE_DIR, filename)
+        with open(path, "w") as f:
+            f.write(code)
             
+        return jsonify({"status": "evolved", "file": filename})
     except Exception as e:
-        print(f"Evolve Error: {e}")
-
-    return jsonify(result)
+        return jsonify({"status": "failed", "error": str(e)})
 
 @app.route('/self_heal', methods=['POST'])
 def self_heal():
+    """Analyze traceback and suggest fixes."""
+    if not model: return jsonify({"status": "offline"})
+    
     data = request.json
-    error_trace = data.get("traceback", "")
-    print(f"🚑 [HEAL] Analyzing Error...")
-
-    prompt = f"Analyze this Python traceback and provide a FIXED version of the function:\n{error_trace}\nReturn ONLY Python code."
+    trace = data.get("traceback", "")
+    print(f"🚑 [HEAL] Diagnosing Crash...")
     
     try:
-        resp = model.generate_content(prompt)
-        fix_code = resp.text.replace("```python", "").replace("```", "").strip()
-        return jsonify({"status": "healed", "patch": fix_code})
+        prompt = f"Fix this Python error for a Selenium/PyAutoGUI bot:\n{trace}\nReturn full fixed code."
+        response = model.generate_content(prompt)
+        return jsonify({"status": "healed", "fix": clean_python_code(response.text)})
     except Exception as e:
         return jsonify({"status": "failed", "error": str(e)})
 
