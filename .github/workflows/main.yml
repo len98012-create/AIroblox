@@ -71,6 +71,9 @@ jobs:
         run: |
           git config --global user.name "Sentinel-Auto"
           git config --global user.email "bot@sentinel.io"
-          git add -A memory/ logs/ extensions/
-          git commit -m "💾 Sync State: $(date)" || echo "No changes"
+          
+          # SỬA LỖI TẠI ĐÂY: Dùng -f để cưỡng bức add các thư mục bị ignore
+          git add -f memory/ logs/ extensions/
+          
+          git commit -m "💾 Auto-Save: $(date)" || echo "No changes to sync"
           git push origin main
