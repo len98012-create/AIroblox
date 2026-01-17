@@ -1,5 +1,6 @@
 🌐 [INIT] Deep Fixing Browser & Driver mismatch...
 ✅ [DRIVER] Success! Port issue bypassed.
 🍪 [LOGIN] Injecting Cookie...
-📡 [DISCORD] ❌ Login Error: To take screenshots, you must install Pillow version 9.2.0 or greater and gnome-screenshot by running `sudo apt install gnome-screenshot`
-💓 [HEARTBEAT] 16:32:11 - System Stable.
+📸 Screenshot saved via Scrot: logs/login_status.png
+📡 [DISCORD] 🚀 Sentinel is Online!
+💓 [HEARTBEAT] 16:37:20 - System Stable.
