@@ -55,13 +55,16 @@ jobs:
           Xvfb :99 -screen 0 1280x720x24 -ac +extension RANDR > /dev/null 2>&1 &
           sleep 3
           fluxbox > /dev/null 2>&1 &
-          sleep 2
-          python3 -u brain_service/app.py & 
+          
+          # Khởi chạy Brain
+          python3 -u brain_service/app.py > logs/brain.log 2>&1 &
           sleep 5
+          
+          # Khởi chạy Agent chính với chế độ Unbuffered
           if [ -f "sentinel_v35_dual_memory.py" ]; then
-            python3 -u sentinel_v35_dual_memory.py
+            stdbuf -oL python3 -u sentinel_v35_dual_memory.py 2>&1 | tee logs/agent_runtime.log
           else
-            echo "❌ Critical: Agent file missing!"
+            echo "❌ Agent file missing!"
             exit 1
           fi
 
