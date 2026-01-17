@@ -1,13 +1,17 @@
 name: Sentinel_SRE_Turbo_Speed
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:      # Kích hoạt thủ công bằng nút Run
+  schedule:
+    - cron: '0 */4 * * *' # Tự động chạy lại mỗi 4 tiếng để duy trì liên tục
 
 jobs:
   run-sentinel:
     runs-on: ubuntu-latest
+    timeout-minutes: 350 # Giới hạn an toàn (tối đa GitHub cho phép là 360)
     permissions:
-      contents: write
+      contents: write    # Cấp quyền ghi đè để lưu bộ nhớ (Memory)
+    
     env:
       XAUTHORITY: /home/runner/.Xauthority
       DISPLAY: :99
@@ -17,50 +21,77 @@ jobs:
       GEMINI_KEY_9: ${{ secrets.GEMINI_KEY_9 }}
 
     steps:
-      - name: Checkout Code
+      - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      # CACHE TỐI THƯỢNG: Lưu cả folder cài đặt Apt
-      - name: Turbo Cache
+      # CACHE: Chỉ cache thư mục libs để tránh lỗi permission với /var/cache/apt
+      - name: ⚡ Turbo Cache Libs
         uses: actions/cache@v3
         with:
-          path: |
-            /var/cache/apt/archives
-            libs
-          key: turbo-cache-${{ runner.os }}-${{ hashFiles('**/app.py') }}
+          path: libs
+          key: sentinel-libs-${{ runner.os }}-${{ hashFiles('**/app.py') }}
+          restore-keys: |
+            sentinel-libs-${{ runner.os }}-
 
-      - name: Instant Setup
+      - name: 🛠️ Instant Setup (System)
         run: |
-          # Cài đặt cực nhanh với các flag rút gọn
+          # Cài đặt hệ thống (Thêm tesseract-ocr cho Vision Core)
           sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends chromium-browser xvfb fluxbox xauth scrot > /dev/null
+          sudo apt-get install -y -qq --no-install-recommends \
+            chromium-browser xvfb fluxbox xauth scrot tesseract-ocr > /dev/null
           
-          mkdir -p libs memory/action_steps logs/screenshots
+          # Tạo cấu trúc thư mục bắt buộc
+          mkdir -p libs memory/action_steps logs/screenshots sentinel_agent/extensions
           
-          # Chỉ cài pip nếu libs trống
-          if [ ! -d "libs/selenium" ]; then
-            pip install -q -t libs google-genai requests pyautogui Pillow selenium psutil flask
-          fi
-          
+          # Thiết lập màn hình ảo
           touch $XAUTHORITY
           xauth add :99 . $(mcookie)
 
-      - name: Turbo Run
+      - name: 📦 Install Python Deps
         run: |
-          # Giảm độ phân giải để tăng tốc xử lý ảnh
+          # Chỉ cài nếu thư viện chưa tồn tại trong Cache
+          if [ ! -d "libs/google" ]; then
+            echo "Cache miss! Installing dependencies..."
+            pip install -q -t libs \
+              google-generativeai \
+              requests \
+              pyautogui \
+              Pillow \
+              selenium \
+              psutil \
+              flask \
+              pytesseract \
+              opencv-python-headless
+          else
+            echo "⚡ Cache hit! Skipping pip install."
+          fi
+
+      - name: 🚀 Turbo Run (Brain + Agent)
+        run: |
+          # 1. Khởi chạy GUI ảo (Low Res để tối ưu tốc độ xử lý ảnh)
           Xvfb :99 -screen 0 1280x720x16 -auth $XAUTHORITY > /dev/null 2>&1 &
           fluxbox > /dev/null 2>&1 &
+          sleep 2
           
-          # Chạy song song Brain và Agent (chờ ít hơn)
+          # 2. Khởi chạy Brain Service (Background)
           python3 brain_service/app.py & 
-          sleep 1
+          echo "🧠 Brain Service Started..."
+          sleep 3
+          
+          # 3. Khởi chạy Agent (Foreground - Chặn tiến trình để giữ Runner sống)
+          echo "🤖 Launching Sentinel Dual Memory..."
           python3 sentinel_v35_dual_memory.py
 
-      - name: Background Sync
-        if: always()
+      - name: 💾 Background Sync (Save Memory)
+        if: always() # Luôn chạy dù code Python bị Crash
         run: |
           git config --global user.name "Sentinel-Turbo"
           git config --global user.email "sre@sentinel.io"
-          git add memory/ logs/
-          git commit -m "⚡ Turbo Sync: $(date)" || echo "No changes"
-          git push -f # Dùng force push để tránh xung đột tốc độ cao
+          
+          # Thêm các file quan trọng cần lưu
+          git add memory/ logs/ sentinel_agent/extensions/
+          
+          # Commit và Force Push
+          git commit -m "⚡ Turbo Sync: $(date) - Self-Healing & Memory Update" || echo "No changes to sync"
+          git pull --rebase --strategy-option=theirs # Tránh xung đột trước khi push
+          git push
