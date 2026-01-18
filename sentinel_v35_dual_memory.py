@@ -35,14 +35,14 @@ class SentinelAgent:
     def take_screenshot(self, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         try:
-            # GIỮ NGUYÊN: Chụp trực tiếp từ frame buffer (Xvfb) để chống đen ảnh
+            # GIỮ NGUYÊN: Cách chụp scrot của v44 để ảnh không bị đen
             subprocess.run(["scrot", "-z", path], check=True)
             print(f"📸 Screen Captured: {path}")
         except:
             if self.driver: self.driver.save_screenshot(path)
 
     def init_browser(self):
-        """GIỮ NGUYÊN BẢN V44 - ĐẢM BẢO HIỂN THỊ ỔN ĐỊNH"""
+        """HÀM INIT V44 - KHÔNG THAY ĐỔI MÀN HÌNH"""
         print("🌐 [INIT] Deep Visual Reconstruction (v44)...")
         os.environ["DISPLAY"] = ":99"
         
@@ -71,7 +71,7 @@ class SentinelAgent:
             sys.exit(1)
 
     def login_roblox(self):
-        """NÂNG CẤP: Nạp từ cookies.json bạn đã tạo"""
+        """CẬP NHẬT: Chỉ sửa logic nạp Cookie để đọc file cookies.json"""
         try:
             print("🍪 [LOGIN] Đang nạp Session từ file cookies.json...")
             self.driver.get("https://www.roblox.com/home")
@@ -82,46 +82,57 @@ class SentinelAgent:
                     cookies = json.load(f)
                     self.driver.delete_all_cookies()
                     for c in cookies:
-                        # Chuẩn hóa SameSite để tránh lỗi trình duyệt
-                        if 'sameSite' in c and c['sameSite'] not in ["Strict", "Lax", "None"]:
-                            c['sameSite'] = "Lax"
-                        # Chỉ lấy các trường hợp lệ
-                        clean_c = {k: v for k, v in c.items() if k in ['name', 'value', 'domain', 'path', 'secure', 'httpOnly', 'sameSite']}
-                        try: self.driver.add_cookie(clean_c)
+                        # Chỉ lấy các trường cần thiết để Selenium không báo lỗi
+                        clean_cookie = {}
+                        for key in ['name', 'value', 'domain', 'path', 'secure', 'httpOnly']:
+                            if key in c: clean_cookie[key] = c[key]
+                        
+                        # Chuẩn hóa SameSite
+                        if 'sameSite' in c and c['sameSite'] in ["Strict", "Lax", "None"]:
+                            clean_cookie['sameSite'] = c['sameSite']
+                        else:
+                            clean_cookie['sameSite'] = "Lax"
+                            
+                        try: self.driver.add_cookie(clean_cookie)
                         except: pass
                 
                 self.driver.refresh()
                 time.sleep(10)
                 
-                # Kiểm tra kết quả
-                self.take_screenshot("logs/login_result.png")
+                self.take_screenshot("logs/login_final.png")
                 if "login" not in self.driver.current_url.lower():
-                    self.discord.send("🚀 Sentinel Login thành công qua file JSON!", "logs/login_result.png")
+                    self.discord.send("🚀 Sentinel Login thành công (JSON)!", "logs/login_final.png")
                     return True
             
-            self.discord.send("❌ Login thất bại. File cookies.json không có hiệu lực hoặc hết hạn.")
+            # Dự phòng: Nếu không có file JSON, dùng Cookie môi trường
+            if self.cookie_env:
+                self.driver.add_cookie({"name": ".ROBLOSECURITY", "value": self.cookie_env, "domain": ".roblox.com"})
+                self.driver.refresh()
+                time.sleep(10)
+                return "login" not in self.driver.current_url.lower()
+
             return False
         except Exception as e:
             self.discord.send(f"❌ Lỗi Login: {e}")
             return False
 
     def enter_game(self):
-        """GIỮ NGUYÊN: Logic điều hướng và nhấn Play"""
+        """GIỮ NGUYÊN: Logic vào game V44"""
         try:
-            print(f"🎮 [GAME] Đang di chuyển tới PLS DONATE...")
+            print(f"🎮 [GAME] Đang truy cập PLS DONATE...")
             self.driver.get(self.game_url)
-            time.sleep(10) 
+            time.sleep(10)
             self.take_screenshot("logs/game_page.png")
             
             print("🕹️ [ACTION] Đang nhấn nút Play...")
             self.driver.execute_script("""
-                var playBtn = document.querySelector('.btn-common-play-main') || 
-                              document.querySelector('[data-testid="play-button"]');
-                if(playBtn) { playBtn.click(); }
+                var btn = document.querySelector('.btn-common-play-main') || 
+                          document.querySelector('[data-testid="play-button"]');
+                if(btn) { btn.click(); }
             """)
             time.sleep(15)
             self.take_screenshot("logs/after_play.png")
-            self.discord.send("🎮 Đã thực hiện nhấn Play. Đang chờ game load...", "logs/after_play.png")
+            self.discord.send("🎮 Đã thực hiện nhấn Play.", "logs/after_play.png")
         except Exception as e:
             print(f"❌ [GAME ERROR] {e}")
 
@@ -134,11 +145,6 @@ class SentinelAgent:
             now = datetime.datetime.now().strftime('%H:%M:%S')
             print(f"💓 [HEARTBEAT] {now} - Sentinel đang hoạt động.")
             pyautogui.press('space')
-            
-            if datetime.datetime.now().minute % 30 == 0:
-                self.take_screenshot("logs/periodic_check.png")
-                self.discord.send(f"📸 Cập nhật trạng thái lúc {now}", "logs/periodic_check.png")
-            
             time.sleep(120)
 
 if __name__ == "__main__":
