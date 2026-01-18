@@ -47,31 +47,43 @@ class SentinelAgent:
                 print(f"📸 Screenshot saved via Driver.")
 
     def init_browser(self):
-        print("🌐 [INIT] Deep Fixing Browser & Driver mismatch...")
+        print("🌐 [INIT] Switching to HEADED mode on Xvfb...")
         opt = Options()
-        # --- CẤU HÌNH RENDER HÌNH ẢNH (FIX BLACK SCREEN) ---
-        opt.add_argument("--headless=new")
+        
+        # [QUAN TRỌNG] XÓA DÒNG --headless ĐỂ CHROME HIỆN LÊN XVFB
+        # opt.add_argument("--headless=new") <--- ĐÃ XÓA
+        
+        # Cấu hình để chạy ổn định trên Linux
         opt.add_argument("--no-sandbox")
         opt.add_argument("--disable-dev-shm-usage")
         opt.add_argument("--disable-gpu")
-        opt.add_argument("--remote-debugging-port=9222")
         
-        # [QUAN TRỌNG] Các dòng này giúp hiển thị hình ảnh trên Xvfb
-        opt.add_argument("--force-device-scale-factor=1")
-        opt.add_argument("--hide-scrollbars")
-        opt.add_argument("--blink-settings=imagesEnabled=true")
+        # Cấu hình hiển thị
+        opt.add_argument("--start-maximized")
         opt.add_argument("--window-size=1280,720")
-
+        opt.add_argument("--window-position=0,0") # Ép cửa sổ về góc để chắc chắn lọt vào khung hình
+        opt.add_argument("--hide-scrollbars")
+        
+        # Giả lập người dùng thật
+        opt.add_argument("--disable-infobars")
+        opt.add_argument("--excludeSwitches=['enable-automation']")
+        
         opt.add_argument(f"--user-data-dir=/tmp/sentinel_{random.randint(1000, 9999)}")
         opt.binary_location = "/usr/bin/chromium-browser"
         
         try:
+            # Tự động tải Driver
             service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
             self.driver = webdriver.Chrome(service=service, options=opt)
             
-            # Warmup: Mở trang trắng để kích hoạt Renderer
-            self.driver.get("about:blank")
+            # [Trick] Mở browser xong, đợi 1 chút rồi maximize lại lần nữa để chắc chắn
+            print("✅ [DRIVER] Browser launched in DISPLAY :99")
             time.sleep(2)
+            self.driver.maximize_window()
+            
+        except Exception as e:
+            print(f"❌ [CRITICAL] Browser failed: {e}")
+            sys.exit(1)
             
             print("✅ [DRIVER] Success! Port issue bypassed & Renderer active.")
         except Exception as e:
