@@ -44,37 +44,38 @@ class SentinelAgent:
             if self.driver: self.driver.save_screenshot(path)
 
     def init_browser(self):
-        print("🌐 [INIT] Forcing SwiftShader for Visual Rendering...")
+        print("🌐 [INIT] Total Visual Reconstruction (SwiftShader + Forced Paint)...")
+        # [KEY 9] Đảm bảo môi trường Display được thiết lập chính xác
         os.environ["DISPLAY"] = ":99"
         
         opt = Options()
-        # --- CẤU HÌNH THẮP SÁNG MÀN HÌNH ---
-        opt.add_argument("--use-gl=swiftshader") # Ép dùng CPU vẽ hình (Rất quan trọng)
         opt.add_argument("--no-sandbox")
         opt.add_argument("--disable-dev-shm-usage")
         opt.add_argument("--disable-gpu")
-        opt.add_argument("--remote-debugging-port=9222")
+        opt.add_argument("--use-gl=swiftshader") # Render bằng CPU
         
-        # Đảm bảo cửa sổ luôn ở vùng Scrot có thể thấy
+        # --- FLAG CHỐNG MÀN HÌNH ĐEN (OCULUSION) ---
+        opt.add_argument("--disable-backgrounding-occluded-windows")
+        opt.add_argument("--disable-renderer-backgrounding")
+        opt.add_argument("--disable-background-timer-throttling")
+        
         opt.add_argument("--window-size=1280,720")
         opt.add_argument("--window-position=0,0")
-        opt.add_argument("--start-maximized")
         opt.add_argument("--force-device-scale-factor=1")
-        
         opt.binary_location = "/usr/bin/chromium-browser"
         
         try:
             service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
             self.driver = webdriver.Chrome(service=service, options=opt)
             
-            # [TRICK] Mở trang nền trắng để kích hoạt màn hình ảo
-            self.driver.get("data:text/html,<body style='background:white; text-align:center'><h1>SENTINEL ACTIVE</h1></body>")
-            time.sleep(3)
+            # Ép trình duyệt vẽ một trang có màu sắc mạnh để kích hoạt buffer
+            self.driver.get("data:text/html,<body style='background:blue; color:white; display:flex; justify-content:center; align-items:center; height:100vh; margin:0'><h1>SENTINEL RENDERING TEST</h1></body>")
+            time.sleep(5) 
             
-            print("✅ [DRIVER] Success! Display :99 is now rendering.")
+            print("✅ [DRIVER] Renderer active and buffer initialized.")
         except Exception as e:
             print(f"❌ [CRITICAL] Connection Failed: {e}")
-            os.system("sudo fuser -k 9222/tcp || true")
+            os.system("fuser -k 9222/tcp || true")
             sys.exit(1)
 
     def login_roblox(self):
