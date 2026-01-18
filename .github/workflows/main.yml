@@ -53,20 +53,23 @@ jobs:
 
       - name: 🚀 Launch Sentinel v7.7
         run: |
-          # 1. Khởi tạo Display ảo với độ phân giải chuẩn
-          Xvfb :99 -screen 0 1280x720x24 -ac +extension RANDR > /dev/null 2>&1 &
-          sleep 3
-          fluxbox > /dev/null 2>&1 &
+          # 1. Khởi tạo Display ảo với các tính năng render nâng cao
+          Xvfb :99 -screen 0 1280x720x24 -ac +extension RANDR +render -noreset > /dev/null 2>&1 &
+          sleep 5
           
-          # 2. Chạy Brain Service (Ngầm)
+          # 2. Khởi động Fluxbox (Rất quan trọng để quản lý cửa sổ Chromium)
+          fluxbox -display :99 > /dev/null 2>&1 &
+          sleep 3
+          
+          # 3. Chạy Brain Service (Ngầm)
           if [ -f "brain_service/app.py" ]; then
             python3 -u brain_service/app.py > logs/brain.log 2>&1 &
             BRAIN_PID=$!
             echo "🧠 Brain Service started (PID: $BRAIN_PID)"
           fi
-          sleep 5
           
-          # 3. Chạy Agent chính (Foreground)
+          # 4. Chạy Agent chính với DISPLAY đã được xuất (Export)
+          export DISPLAY=:99
           if [ -f "sentinel_v35_dual_memory.py" ]; then
             echo "🚀 Sentinel Agent is taking control..."
             python3 -u sentinel_v35_dual_memory.py 2>&1 | tee logs/agent_runtime.log
@@ -74,10 +77,6 @@ jobs:
             echo "❌ Critical Error: Agent file missing!"
             exit 1
           fi
-
-          # 4. Đợi Brain Service nếu cần
-          [ -n "$BRAIN_PID" ] && wait $BRAIN_PID
-
       - name: 💾 State Persistence
         if: always()
         run: |
