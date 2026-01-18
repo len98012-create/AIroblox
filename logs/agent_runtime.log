@@ -1,23 +1,8 @@
-🌐 [INIT] Total Visual Reconstruction (SwiftShader + Forced Paint)...
-❌ [CRITICAL] Connection Failed: Message: session not created: DevToolsActivePort file doesn't exist; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
-Stacktrace:
-#0 0x55dd543f540a <unknown>
-#1 0x55dd53e2976b <unknown>
-#2 0x55dd53e68b4b <unknown>
-#3 0x55dd53e64d0f <unknown>
-#4 0x55dd53e5f243 <unknown>
-#5 0x55dd53eaedcc <unknown>
-#6 0x55dd53eae4ec <unknown>
-#7 0x55dd53e6d7b2 <unknown>
-#8 0x55dd53e6e461 <unknown>
-#9 0x55dd543bddf9 <unknown>
-#10 0x55dd543c0d5d <unknown>
-#11 0x55dd543a6b41 <unknown>
-#12 0x55dd543c193b <unknown>
-#13 0x55dd5438d870 <unknown>
-#14 0x55dd543e2828 <unknown>
-#15 0x55dd543e29fc <unknown>
-#16 0x55dd543f4763 <unknown>
-#17 0x7fe0b449caa4 <unknown>
-#18 0x7fe0b4529c6c <unknown>
-
+🌐 [INIT] Deep Visual Reconstruction (v44)...
+✅ [DRIVER] Renderer active. System thắp sáng thành công!
+🍪 [LOGIN] Injecting Cookie...
+📸 Screen Captured: logs/login_status.png
+📡 [DISCORD] 🚀 Sentinel v44 Online!
+💓 [HEARTBEAT] 03:27:20 - Stable.
+💓 [HEARTBEAT] 03:29:20 - Stable.
+💓 [HEARTBEAT] 03:31:20 - Stable.
