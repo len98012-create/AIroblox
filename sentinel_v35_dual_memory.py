@@ -34,50 +34,46 @@ class SentinelAgent:
         self.cookie = os.environ.get("ROBLOX_COOKIE")
 
     def take_screenshot(self, path):
+        """[KEY 9] Chụp ảnh từ buffer Xvfb"""
         os.makedirs(os.path.dirname(path), exist_ok=True)
         try:
-            # Chụp từ buffer Xvfb :99
             subprocess.run(["scrot", "-z", path], check=True)
             print(f"📸 Screenshot saved: {path}")
         except Exception as e:
-            print(f"⚠️ Scrot failed, fallback to Selenium: {e}")
+            print(f"⚠️ Scrot failed: {e}")
             if self.driver: self.driver.save_screenshot(path)
 
     def init_browser(self):
-        print("🌐 [INIT] Deep Fixing DevTools with Forced Display :99...")
-        
-        # [KEY 9] Ép nhận diện Display ảo ngay trong script
+        print("🌐 [INIT] Forcing SwiftShader for Visual Rendering...")
         os.environ["DISPLAY"] = ":99"
         
         opt = Options()
-        # Chạy HEADED (có giao diện) bên trong Xvfb để tránh màn hình đen
+        # --- CẤU HÌNH THẮP SÁNG MÀN HÌNH ---
+        opt.add_argument("--use-gl=swiftshader") # Ép dùng CPU vẽ hình (Rất quan trọng)
         opt.add_argument("--no-sandbox")
         opt.add_argument("--disable-dev-shm-usage")
         opt.add_argument("--disable-gpu")
-        
-        # Sửa lỗi DevToolsActivePort bằng cách ép Port debugging cố định
         opt.add_argument("--remote-debugging-port=9222")
         
+        # Đảm bảo cửa sổ luôn ở vùng Scrot có thể thấy
         opt.add_argument("--window-size=1280,720")
         opt.add_argument("--window-position=0,0")
         opt.add_argument("--start-maximized")
-        opt.add_argument("--disable-blink-features=AutomationControlled")
+        opt.add_argument("--force-device-scale-factor=1")
         
-        # Sử dụng thư mục tạm riêng biệt cho mỗi lần chạy
-        tmp_user_dir = f"/tmp/sentinel_{random.randint(1000, 9999)}"
-        opt.add_argument(f"--user-data-dir={tmp_user_dir}")
         opt.binary_location = "/usr/bin/chromium-browser"
         
         try:
             service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
             self.driver = webdriver.Chrome(service=service, options=opt)
             
-            print("✅ [DRIVER] Success! Connected to Display :99")
-            time.sleep(2)
-            self.driver.maximize_window()
+            # [TRICK] Mở trang nền trắng để kích hoạt màn hình ảo
+            self.driver.get("data:text/html,<body style='background:white; text-align:center'><h1>SENTINEL ACTIVE</h1></body>")
+            time.sleep(3)
+            
+            print("✅ [DRIVER] Success! Display :99 is now rendering.")
         except Exception as e:
             print(f"❌ [CRITICAL] Connection Failed: {e}")
-            # Tự động dọn dẹp port bị treo nếu có
             os.system("sudo fuser -k 9222/tcp || true")
             sys.exit(1)
 
@@ -91,7 +87,7 @@ class SentinelAgent:
             time.sleep(5)
             self.driver.add_cookie({"name": ".ROBLOSECURITY", "value": self.cookie, "domain": ".roblox.com"})
             self.driver.refresh()
-            time.sleep(10) 
+            time.sleep(12) # Tăng thời gian đợi để render giao diện hoàn tất
             
             self.take_screenshot("logs/login_status.png")
             self.discord.send("🚀 Sentinel Online & Rendering!", "logs/login_status.png")
