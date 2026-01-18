@@ -34,76 +34,67 @@ class SentinelAgent:
         self.cookie = os.environ.get("ROBLOX_COOKIE")
 
     def take_screenshot(self, path):
-        """[KEY 9 FIX] Sử dụng SCROT thay thế PyAutoGUI để tránh lỗi gnome-screenshot"""
         os.makedirs(os.path.dirname(path), exist_ok=True)
         try:
-            # Chụp trực tiếp từ Buffer của Xvfb (:99)
+            # Chụp từ buffer Xvfb :99
             subprocess.run(["scrot", "-z", path], check=True)
-            print(f"📸 Screenshot saved via Scrot: {path}")
+            print(f"📸 Screenshot saved: {path}")
         except Exception as e:
-            print(f"⚠️ Scrot failed, trying Selenium fallback: {e}")
-            if self.driver:
-                self.driver.save_screenshot(path)
-                print(f"📸 Screenshot saved via Driver.")
+            print(f"⚠️ Scrot failed, fallback to Selenium: {e}")
+            if self.driver: self.driver.save_screenshot(path)
 
     def init_browser(self):
-        print("🌐 [INIT] Switching to HEADED mode on Xvfb...")
+        print("🌐 [INIT] Deep Fixing DevTools with Forced Display :99...")
+        
+        # [KEY 9] Ép nhận diện Display ảo ngay trong script
+        os.environ["DISPLAY"] = ":99"
+        
         opt = Options()
-        
-        # [QUAN TRỌNG] XÓA DÒNG --headless ĐỂ CHROME HIỆN LÊN XVFB
-        # opt.add_argument("--headless=new") <--- ĐÃ XÓA
-        
-        # Cấu hình để chạy ổn định trên Linux
+        # Chạy HEADED (có giao diện) bên trong Xvfb để tránh màn hình đen
         opt.add_argument("--no-sandbox")
         opt.add_argument("--disable-dev-shm-usage")
         opt.add_argument("--disable-gpu")
         
-        # Cấu hình hiển thị
-        opt.add_argument("--start-maximized")
+        # Sửa lỗi DevToolsActivePort bằng cách ép Port debugging cố định
+        opt.add_argument("--remote-debugging-port=9222")
+        
         opt.add_argument("--window-size=1280,720")
-        opt.add_argument("--window-position=0,0") # Ép cửa sổ về góc để chắc chắn lọt vào khung hình
-        opt.add_argument("--hide-scrollbars")
+        opt.add_argument("--window-position=0,0")
+        opt.add_argument("--start-maximized")
+        opt.add_argument("--disable-blink-features=AutomationControlled")
         
-        # Giả lập người dùng thật
-        opt.add_argument("--disable-infobars")
-        opt.add_argument("--excludeSwitches=['enable-automation']")
-        
-        opt.add_argument(f"--user-data-dir=/tmp/sentinel_{random.randint(1000, 9999)}")
+        # Sử dụng thư mục tạm riêng biệt cho mỗi lần chạy
+        tmp_user_dir = f"/tmp/sentinel_{random.randint(1000, 9999)}"
+        opt.add_argument(f"--user-data-dir={tmp_user_dir}")
         opt.binary_location = "/usr/bin/chromium-browser"
         
         try:
-            # Tự động tải Driver
             service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
             self.driver = webdriver.Chrome(service=service, options=opt)
             
-            # [Trick] Mở browser xong, đợi 1 chút rồi maximize lại lần nữa để chắc chắn
-            print("✅ [DRIVER] Browser launched in DISPLAY :99")
+            print("✅ [DRIVER] Success! Connected to Display :99")
             time.sleep(2)
             self.driver.maximize_window()
-            
         except Exception as e:
-            print(f"❌ [CRITICAL] Browser failed: {e}")
-            sys.exit(1)
-            
-            print("✅ [DRIVER] Success! Port issue bypassed & Renderer active.")
-        except Exception as e:
-            print(f"❌ [CRITICAL] Browser still failed: {e}")
+            print(f"❌ [CRITICAL] Connection Failed: {e}")
+            # Tự động dọn dẹp port bị treo nếu có
+            os.system("sudo fuser -k 9222/tcp || true")
             sys.exit(1)
 
     def login_roblox(self):
         if not self.cookie:
-            self.discord.send("⚠️ No Cookie found!")
+            self.discord.send("⚠️ No Cookie!")
             return
         try:
             print("🍪 [LOGIN] Injecting Cookie...")
             self.driver.get("https://www.roblox.com/home")
-            time.sleep(5) # Đợi tải trang
+            time.sleep(5)
             self.driver.add_cookie({"name": ".ROBLOSECURITY", "value": self.cookie, "domain": ".roblox.com"})
             self.driver.refresh()
-            time.sleep(10) # [FIX] Tăng thời gian đợi để Roblox load hết giao diện
+            time.sleep(10) 
             
             self.take_screenshot("logs/login_status.png")
-            self.discord.send("🚀 Sentinel Online! (Check Image for Black Screen Fix)", "logs/login_status.png")
+            self.discord.send("🚀 Sentinel Online & Rendering!", "logs/login_status.png")
         except Exception as e:
             self.discord.send(f"❌ Login Error: {e}")
 
@@ -113,11 +104,8 @@ class SentinelAgent:
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S")
             print(f"💓 [HEARTBEAT] {now} - System Stable.")
-            
-            # Di chuyển chuột ngẫu nhiên
             pyautogui.moveTo(random.randint(100, 800), random.randint(100, 500))
             pyautogui.press('space')
-            
             time.sleep(120)
 
 if __name__ == "__main__":
