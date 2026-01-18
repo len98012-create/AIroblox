@@ -35,17 +35,15 @@ class SentinelAgent:
     def take_screenshot(self, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         try:
-            # GIỮ NGUYÊN: Cách chụp scrot của v44 để ảnh không bị đen
             subprocess.run(["scrot", "-z", path], check=True)
             print(f"📸 Screen Captured: {path}")
         except:
             if self.driver: self.driver.save_screenshot(path)
 
     def init_browser(self):
-        """HÀM INIT V44 - KHÔNG THAY ĐỔI MÀN HÌNH"""
+        """GIỮ NGUYÊN V44 - ĐẢM BẢO HIỂN THỊ"""
         print("🌐 [INIT] Deep Visual Reconstruction (v44)...")
         os.environ["DISPLAY"] = ":99"
-        
         opt = Options()
         opt.add_argument("--remote-debugging-pipe")
         opt.add_argument("--no-sandbox")
@@ -60,79 +58,69 @@ class SentinelAgent:
         try:
             service = Service(ChromeDriverManager().install())
             self.driver = webdriver.Chrome(service=service, options=opt)
-            
-            # GIỮ NGUYÊN: Test màn hình xanh để kích hoạt renderer
             self.driver.get("data:text/html,<body style='background:blue; color:white; display:flex; justify-content:center; align-items:center; height:100vh; margin:0'><h1>SENTINEL LIGHT ON</h1></body>")
             time.sleep(5)
-            print("✅ [DRIVER] Renderer active. System thắp sáng thành công!")
+            print("✅ [DRIVER] Renderer active.")
         except Exception as e:
             print(f"❌ [CRITICAL] Failed: {e}")
-            os.system("pkill -9 chrome || true")
             sys.exit(1)
 
     def login_roblox(self):
-        """CẬP NHẬT: Chỉ sửa logic nạp Cookie để đọc file cookies.json"""
+        """NẠP COOKIE JSON TỪ VPN"""
         try:
             print("🍪 [LOGIN] Đang nạp Session từ file cookies.json...")
             self.driver.get("https://www.roblox.com/home")
             time.sleep(5)
-
             if os.path.exists("cookies.json"):
                 with open("cookies.json", "r") as f:
                     cookies = json.load(f)
                     self.driver.delete_all_cookies()
                     for c in cookies:
-                        # Chỉ lấy các trường cần thiết để Selenium không báo lỗi
-                        clean_cookie = {}
-                        for key in ['name', 'value', 'domain', 'path', 'secure', 'httpOnly']:
-                            if key in c: clean_cookie[key] = c[key]
-                        
-                        # Chuẩn hóa SameSite
-                        if 'sameSite' in c and c['sameSite'] in ["Strict", "Lax", "None"]:
-                            clean_cookie['sameSite'] = c['sameSite']
-                        else:
-                            clean_cookie['sameSite'] = "Lax"
-                            
+                        clean_cookie = {k: v for k, v in c.items() if k in ['name', 'value', 'domain', 'path', 'secure', 'httpOnly']}
+                        clean_cookie['sameSite'] = c.get('sameSite', 'Lax') if c.get('sameSite') in ["Strict", "Lax", "None"] else "Lax"
                         try: self.driver.add_cookie(clean_cookie)
                         except: pass
-                
                 self.driver.refresh()
                 time.sleep(10)
-                
                 self.take_screenshot("logs/login_final.png")
-                if "login" not in self.driver.current_url.lower():
-                    self.discord.send("🚀 Sentinel Login thành công (JSON)!", "logs/login_final.png")
-                    return True
-            
-            # Dự phòng: Nếu không có file JSON, dùng Cookie môi trường
-            if self.cookie_env:
-                self.driver.add_cookie({"name": ".ROBLOSECURITY", "value": self.cookie_env, "domain": ".roblox.com"})
-                self.driver.refresh()
-                time.sleep(10)
                 return "login" not in self.driver.current_url.lower()
-
             return False
         except Exception as e:
             self.discord.send(f"❌ Lỗi Login: {e}")
             return False
 
     def enter_game(self):
-        """GIỮ NGUYÊN: Logic vào game V44"""
+        """[KEY 9] TÍCH HỢP POPUP KILLER & AUTO PLAY"""
         try:
             print(f"🎮 [GAME] Đang truy cập PLS DONATE...")
             self.driver.get(self.game_url)
             time.sleep(10)
-            self.take_screenshot("logs/game_page.png")
             
-            print("🕹️ [ACTION] Đang nhấn nút Play...")
+            # KÍCH HOẠT POPUP KILLER: Xóa các bảng overlay chặn màn hình
+            print("🛡️ [POPUP KILLER] Đang quét dọn các bảng thông báo chặn nút Play...")
             self.driver.execute_script("""
-                var btn = document.querySelector('.btn-common-play-main') || 
-                          document.querySelector('[data-testid="play-button"]');
-                if(btn) { btn.click(); }
+                var selectors = [
+                    '.modal-backdrop', '.modal-dialog', '#modal-confirmation',
+                    '.fc-ab-root', '.cookie-banner', '.pdp-login-overlay',
+                    '.dark-theme-update-notice'
+                ];
+                selectors.forEach(s => {
+                    var el = document.querySelector(s);
+                    if(el) { el.remove(); console.log('Removed: ' + s); }
+                });
+                // Ép nút Play hiện lên nếu bị ẩn ngầm
+                var playBtn = document.querySelector('.btn-common-play-main') || 
+                              document.querySelector('[data-testid="play-button"]');
+                if(playBtn) { 
+                    playBtn.style.zIndex = '9999'; 
+                    playBtn.style.opacity = '1';
+                    playBtn.click(); 
+                }
             """)
+            
             time.sleep(15)
-            self.take_screenshot("logs/after_play.png")
-            self.discord.send("🎮 Đã thực hiện nhấn Play.", "logs/after_play.png")
+            self.take_screenshot("logs/after_popup_killer.png")
+            self.discord.send("🎮 Đã dọn dẹp Popup và nhấn Play thành công!", "logs/after_popup_killer.png")
         except Exception as e:
             print(f"❌ [GAME ERROR] {e}")
 
@@ -140,7 +128,6 @@ class SentinelAgent:
         self.init_browser()
         if self.login_roblox():
             self.enter_game()
-        
         while True:
             now = datetime.datetime.now().strftime('%H:%M:%S')
             print(f"💓 [HEARTBEAT] {now} - Sentinel đang hoạt động.")
