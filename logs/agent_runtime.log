@@ -1,23 +1,7 @@
-🌐 [INIT] Switching to HEADED mode on Xvfb...
-❌ [CRITICAL] Browser failed: Message: session not created: DevToolsActivePort file doesn't exist; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
-Stacktrace:
-#0 0x55d863e8740a <unknown>
-#1 0x55d8638bb76b <unknown>
-#2 0x55d8638fab4b <unknown>
-#3 0x55d8638f6d0f <unknown>
-#4 0x55d8638f1243 <unknown>
-#5 0x55d863940dcc <unknown>
-#6 0x55d8639404ec <unknown>
-#7 0x55d8638ff7b2 <unknown>
-#8 0x55d863900461 <unknown>
-#9 0x55d863e4fdf9 <unknown>
-#10 0x55d863e52d5d <unknown>
-#11 0x55d863e38b41 <unknown>
-#12 0x55d863e5393b <unknown>
-#13 0x55d863e1f870 <unknown>
-#14 0x55d863e74828 <unknown>
-#15 0x55d863e749fc <unknown>
-#16 0x55d863e86763 <unknown>
-#17 0x7f2021e9caa4 <unknown>
-#18 0x7f2021f29c6c <unknown>
-
+🌐 [INIT] Deep Fixing DevTools with Forced Display :99...
+✅ [DRIVER] Success! Connected to Display :99
+🍪 [LOGIN] Injecting Cookie...
+📸 Screenshot saved: logs/login_status.png
+📡 [DISCORD] 🚀 Sentinel Online & Rendering!
+💓 [HEARTBEAT] 02:54:41 - System Stable.
+💓 [HEARTBEAT] 02:56:41 - System Stable.
