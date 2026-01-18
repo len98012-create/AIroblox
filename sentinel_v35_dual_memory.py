@@ -30,45 +30,40 @@ class SentinelAgent:
         self.discord = DiscordLink()
         self.driver = None
         self.cookie = os.environ.get("ROBLOX_COOKIE")
+        self.game_url = "https://www.roblox.com/vi/games/8737602449/PLS-DONATE"
 
     def take_screenshot(self, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         try:
-            # Chụp trực tiếp từ frame buffer để đảm bảo không bị đen
+            # Chụp trực tiếp từ frame buffer (Xvfb) để chống đen ảnh
             subprocess.run(["scrot", "-z", path], check=True)
             print(f"📸 Screen Captured: {path}")
         except:
             if self.driver: self.driver.save_screenshot(path)
 
     def init_browser(self):
+        """BẢN V44 - GIỮ NGUYÊN HIỂN THỊ ỔN ĐỊNH"""
         print("🌐 [INIT] Deep Visual Reconstruction (v44)...")
         os.environ["DISPLAY"] = ":99"
         
         opt = Options()
-        # --- FIX DEVTOOLS BẰNG PIPE (TUYỆT ĐỐI) ---
         opt.add_argument("--remote-debugging-pipe")
         opt.add_argument("--no-sandbox")
         opt.add_argument("--disable-dev-shm-usage")
-        
-        # --- FIX MÀN HÌNH ĐEN BẰNG OSMESA ---
         opt.add_argument("--use-gl=osmesa") 
         opt.add_argument("--disable-gpu")
         opt.add_argument("--disable-backgrounding-occluded-windows")
-        
-        # Cấu hình thư mục tạm ổn định
         opt.add_argument(f"--user-data-dir=/tmp/sentinel_user")
         opt.add_argument("--window-size=1280,720")
         opt.add_argument("--force-device-scale-factor=1")
         
         try:
-            # Khởi tạo Google Chrome Stable
             service = Service(ChromeDriverManager().install())
             self.driver = webdriver.Chrome(service=service, options=opt)
             
-            # [KEY 9 TEST] Vẽ nền màu XANH DƯƠNG để xác nhận "Màn hình đã sáng"
+            # Test màn hình xanh để kích hoạt renderer
             self.driver.get("data:text/html,<body style='background:blue; color:white; display:flex; justify-content:center; align-items:center; height:100vh; margin:0'><h1>SENTINEL LIGHT ON</h1></body>")
             time.sleep(5)
-            
             print("✅ [DRIVER] Renderer active. System thắp sáng thành công!")
         except Exception as e:
             print(f"❌ [CRITICAL] Failed: {e}")
@@ -78,26 +73,68 @@ class SentinelAgent:
     def login_roblox(self):
         if not self.cookie:
             self.discord.send("⚠️ Cookie missing!")
-            return
+            return False
         try:
             print("🍪 [LOGIN] Injecting Cookie...")
             self.driver.get("https://www.roblox.com/home")
             time.sleep(5)
             self.driver.add_cookie({"name": ".ROBLOSECURITY", "value": self.cookie, "domain": ".roblox.com"})
             self.driver.refresh()
-            time.sleep(10)
+            time.sleep(8)
             
-            self.take_screenshot("logs/login_status.png")
-            self.discord.send("🚀 Sentinel v44 Online!", "logs/login_status.png")
+            # Kiểm tra xem có thực sự vào được trang Home không
+            if "login" not in self.driver.current_url.lower():
+                self.take_screenshot("logs/login_success.png")
+                self.discord.send("🚀 Sentinel Login thành công!", "logs/login_success.png")
+                return True
+            else:
+                self.discord.send("❌ Login thất bại: Cookie đã hết hạn.")
+                return False
         except Exception as e:
             self.discord.send(f"❌ Login Error: {e}")
+            return False
+
+    def enter_game(self):
+        """Logic điều hướng và nhấn Play cho PLS DONATE"""
+        try:
+            print(f"🎮 [GAME] Đang di chuyển tới PLS DONATE...")
+            self.driver.get(self.game_url)
+            time.sleep(10) 
+            
+            self.take_screenshot("logs/game_page.png")
+            
+            print("🕹️ [ACTION] Đang nhấn nút Play...")
+            # Sử dụng JS để click chính xác vào nút Play của Roblox
+            self.driver.execute_script("""
+                var playBtn = document.querySelector('.btn-common-play-main') || 
+                              document.querySelector('[data-testid="play-button"]');
+                if(playBtn) { playBtn.click(); }
+            """)
+            
+            time.sleep(15)
+            self.take_screenshot("logs/after_play.png")
+            self.discord.send("🎮 Đã thực hiện nhấn Play. Đang chờ game load...", "logs/after_play.png")
+        except Exception as e:
+            print(f"❌ [GAME ERROR] {e}")
 
     def run(self):
         self.init_browser()
-        self.login_roblox()
+        
+        if self.login_roblox():
+            self.enter_game()
+        
+        # Vòng lặp duy trì
         while True:
-            print(f"💓 [HEARTBEAT] {datetime.datetime.now().strftime('%H:%M:%S')} - Stable.")
+            now = datetime.datetime.now().strftime('%H:%M:%S')
+            print(f"💓 [HEARTBEAT] {now} - Sentinel đang hoạt động.")
+            # Nhấn space định kỳ để không bị kick AFK
             pyautogui.press('space')
+            
+            # Chụp ảnh định kỳ mỗi 30 phút để theo dõi
+            if datetime.datetime.now().minute % 30 == 0:
+                self.take_screenshot("logs/periodic_check.png")
+                self.discord.send(f"📸 Cập nhật trạng thái lúc {now}", "logs/periodic_check.png")
+            
             time.sleep(120)
 
 if __name__ == "__main__":
