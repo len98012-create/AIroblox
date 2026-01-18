@@ -49,18 +49,31 @@ class SentinelAgent:
     def init_browser(self):
         print("🌐 [INIT] Deep Fixing Browser & Driver mismatch...")
         opt = Options()
+        # --- CẤU HÌNH RENDER HÌNH ẢNH (FIX BLACK SCREEN) ---
         opt.add_argument("--headless=new")
         opt.add_argument("--no-sandbox")
         opt.add_argument("--disable-dev-shm-usage")
         opt.add_argument("--disable-gpu")
         opt.add_argument("--remote-debugging-port=9222")
+        
+        # [QUAN TRỌNG] Các dòng này giúp hiển thị hình ảnh trên Xvfb
+        opt.add_argument("--force-device-scale-factor=1")
+        opt.add_argument("--hide-scrollbars")
+        opt.add_argument("--blink-settings=imagesEnabled=true")
+        opt.add_argument("--window-size=1280,720")
+
         opt.add_argument(f"--user-data-dir=/tmp/sentinel_{random.randint(1000, 9999)}")
         opt.binary_location = "/usr/bin/chromium-browser"
         
         try:
             service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
             self.driver = webdriver.Chrome(service=service, options=opt)
-            print("✅ [DRIVER] Success! Port issue bypassed.")
+            
+            # Warmup: Mở trang trắng để kích hoạt Renderer
+            self.driver.get("about:blank")
+            time.sleep(2)
+            
+            print("✅ [DRIVER] Success! Port issue bypassed & Renderer active.")
         except Exception as e:
             print(f"❌ [CRITICAL] Browser still failed: {e}")
             sys.exit(1)
@@ -72,14 +85,14 @@ class SentinelAgent:
         try:
             print("🍪 [LOGIN] Injecting Cookie...")
             self.driver.get("https://www.roblox.com/home")
-            time.sleep(5)
+            time.sleep(5) # Đợi tải trang
             self.driver.add_cookie({"name": ".ROBLOSECURITY", "value": self.cookie, "domain": ".roblox.com"})
             self.driver.refresh()
-            time.sleep(7)
+            time.sleep(10) # [FIX] Tăng thời gian đợi để Roblox load hết giao diện
+            
             self.take_screenshot("logs/login_status.png")
-            self.discord.send("🚀 Sentinel is Online!", "logs/login_status.png")
+            self.discord.send("🚀 Sentinel Online! (Check Image for Black Screen Fix)", "logs/login_status.png")
         except Exception as e:
-            # Gửi lỗi về Discord để bạn nắm bắt ngay lập tức
             self.discord.send(f"❌ Login Error: {e}")
 
     def run(self):
@@ -88,9 +101,11 @@ class SentinelAgent:
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S")
             print(f"💓 [HEARTBEAT] {now} - System Stable.")
-            # Di chuyển chuột ngẫu nhiên để chống AFK tốt hơn
+            
+            # Di chuyển chuột ngẫu nhiên
             pyautogui.moveTo(random.randint(100, 800), random.randint(100, 500))
             pyautogui.press('space')
+            
             time.sleep(120)
 
 if __name__ == "__main__":
