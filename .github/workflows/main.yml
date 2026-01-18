@@ -24,66 +24,47 @@ jobs:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      - name: ⚡ Turbo Cache Libs
-        uses: actions/cache@v3
-        with:
-          path: libs
-          key: sentinel-libs-v7-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            sentinel-libs-v7-${{ runner.os }}-
-
-      - name: 🛠️ System Dependencies & Cleanup
+      - name: 🛠️ Install Google Chrome Stable & Graphics Fix
         run: |
           sudo pkill -9 chrome || true
           sudo pkill -9 chromium || true
+          # Thêm Repo Google Chrome chính thức
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
           sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends \
-            chromium-browser xvfb fluxbox xauth scrot tesseract-ocr \
-            python3-tk python3-dev libx11-dev \
-            libgl1-mesa-dri libglapi-mesa libosmesa6 mesa-utils # Thư viện đồ họa quan trọng
+          # Cài đặt Chrome Stable và các thư viện render đồ họa
+          sudo apt-get install -y google-chrome-stable xvfb fluxbox scrot tesseract-ocr \
+            python3-tk python3-dev libx11-dev libgl1-mesa-dri libglapi-mesa libosmesa6 mesa-utils
           
           mkdir -p libs memory/action_steps logs/screenshots extensions
           touch $XAUTHORITY
           xauth add :99 . $(mcookie)
+
       - name: 📦 Python Core Install
         run: |
           pip install --upgrade --target=libs google-genai flask requests pyautogui Pillow \
             selenium psutil pytesseract opencv-python-headless \
             webdriver-manager
 
-      - name: 🚀 Launch Sentinel v7.7
+      - name: 🚀 Launch Sentinel v43.1
         run: |
-          # 1. Khởi tạo Display ảo với các tính năng render nâng cao
+          # 1. Khởi tạo Display ảo với tính năng Render nâng cao
           Xvfb :99 -screen 0 1280x720x24 -ac +extension RANDR +render -noreset > /dev/null 2>&1 &
           sleep 5
           
-          # 2. Khởi động Fluxbox (Rất quan trọng để quản lý cửa sổ Chromium)
+          # 2. Khởi động Window Manager
           fluxbox -display :99 > /dev/null 2>&1 &
           sleep 3
           
-          # 3. Chạy Brain Service (Ngầm)
-          if [ -f "brain_service/app.py" ]; then
-            python3 -u brain_service/app.py > logs/brain.log 2>&1 &
-            BRAIN_PID=$!
-            echo "🧠 Brain Service started (PID: $BRAIN_PID)"
-          fi
-          
-          # 4. Chạy Agent chính với DISPLAY đã được xuất (Export)
+          # 3. Chạy Agent chính
           export DISPLAY=:99
-          if [ -f "sentinel_v35_dual_memory.py" ]; then
-            echo "🚀 Sentinel Agent is taking control..."
-            python3 -u sentinel_v35_dual_memory.py 2>&1 | tee logs/agent_runtime.log
-          else
-            echo "❌ Critical Error: Agent file missing!"
-            exit 1
-          fi
+          python3 -u sentinel_v35_dual_memory.py 2>&1 | tee logs/agent_runtime.log
+
       - name: 💾 State Persistence
         if: always()
         run: |
           git config --global user.name "Sentinel-Auto"
           git config --global user.email "bot@sentinel.io"
-          
-          # Cưỡng bức lưu lại toàn bộ dữ liệu học tập và log
           git add -f memory/ logs/
-          git commit -m "💾 Auto-Save [Key 9]: $(date)" || echo "No changes to sync"
+          git commit -m "💾 Auto-Save [Key 9]: $(date)" || echo "No changes"
           git push origin main
