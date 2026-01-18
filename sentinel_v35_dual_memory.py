@@ -1,14 +1,12 @@
-import os, time, datetime, random, pyautogui, pytesseract, cv2, sys, requests, subprocess
+import os, time, datetime, random, pyautogui, sys, requests, subprocess
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.core.os_manager import ChromeType
 from PIL import Image
 
 # --- [KEY 9] HỆ THỐNG TỰ ĐỘNG FIX LỖI 2026 ---
 sys.stdout.reconfigure(line_buffering=True)
-sys.stderr.reconfigure(line_buffering=True)
 
 class DiscordLink:
     def __init__(self):
@@ -34,53 +32,52 @@ class SentinelAgent:
         self.cookie = os.environ.get("ROBLOX_COOKIE")
 
     def take_screenshot(self, path):
-        """[KEY 9] Chụp ảnh từ buffer Xvfb"""
         os.makedirs(os.path.dirname(path), exist_ok=True)
         try:
+            # Chụp trực tiếp từ frame buffer để đảm bảo không bị đen
             subprocess.run(["scrot", "-z", path], check=True)
-            print(f"📸 Screenshot saved: {path}")
-        except Exception as e:
-            print(f"⚠️ Scrot failed: {e}")
+            print(f"📸 Screen Captured: {path}")
+        except:
             if self.driver: self.driver.save_screenshot(path)
 
     def init_browser(self):
-        print("🌐 [INIT] Total Visual Reconstruction (SwiftShader + Forced Paint)...")
-        # [KEY 9] Đảm bảo môi trường Display được thiết lập chính xác
+        print("🌐 [INIT] Deep Visual Reconstruction (v44)...")
         os.environ["DISPLAY"] = ":99"
         
         opt = Options()
+        # --- FIX DEVTOOLS BẰNG PIPE (TUYỆT ĐỐI) ---
+        opt.add_argument("--remote-debugging-pipe")
         opt.add_argument("--no-sandbox")
         opt.add_argument("--disable-dev-shm-usage")
+        
+        # --- FIX MÀN HÌNH ĐEN BẰNG OSMESA ---
+        opt.add_argument("--use-gl=osmesa") 
         opt.add_argument("--disable-gpu")
-        opt.add_argument("--use-gl=swiftshader") # Render bằng CPU
-        
-        # --- FLAG CHỐNG MÀN HÌNH ĐEN (OCULUSION) ---
         opt.add_argument("--disable-backgrounding-occluded-windows")
-        opt.add_argument("--disable-renderer-backgrounding")
-        opt.add_argument("--disable-background-timer-throttling")
         
+        # Cấu hình thư mục tạm ổn định
+        opt.add_argument(f"--user-data-dir=/tmp/sentinel_user")
         opt.add_argument("--window-size=1280,720")
-        opt.add_argument("--window-position=0,0")
         opt.add_argument("--force-device-scale-factor=1")
-        opt.binary_location = "/usr/bin/chromium-browser"
         
         try:
-            service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
+            # Khởi tạo Google Chrome Stable
+            service = Service(ChromeDriverManager().install())
             self.driver = webdriver.Chrome(service=service, options=opt)
             
-            # Ép trình duyệt vẽ một trang có màu sắc mạnh để kích hoạt buffer
-            self.driver.get("data:text/html,<body style='background:blue; color:white; display:flex; justify-content:center; align-items:center; height:100vh; margin:0'><h1>SENTINEL RENDERING TEST</h1></body>")
-            time.sleep(5) 
+            # [KEY 9 TEST] Vẽ nền màu XANH DƯƠNG để xác nhận "Màn hình đã sáng"
+            self.driver.get("data:text/html,<body style='background:blue; color:white; display:flex; justify-content:center; align-items:center; height:100vh; margin:0'><h1>SENTINEL LIGHT ON</h1></body>")
+            time.sleep(5)
             
-            print("✅ [DRIVER] Renderer active and buffer initialized.")
+            print("✅ [DRIVER] Renderer active. System thắp sáng thành công!")
         except Exception as e:
-            print(f"❌ [CRITICAL] Connection Failed: {e}")
-            os.system("fuser -k 9222/tcp || true")
+            print(f"❌ [CRITICAL] Failed: {e}")
+            os.system("pkill -9 chrome || true")
             sys.exit(1)
 
     def login_roblox(self):
         if not self.cookie:
-            self.discord.send("⚠️ No Cookie!")
+            self.discord.send("⚠️ Cookie missing!")
             return
         try:
             print("🍪 [LOGIN] Injecting Cookie...")
@@ -88,10 +85,10 @@ class SentinelAgent:
             time.sleep(5)
             self.driver.add_cookie({"name": ".ROBLOSECURITY", "value": self.cookie, "domain": ".roblox.com"})
             self.driver.refresh()
-            time.sleep(12) # Tăng thời gian đợi để render giao diện hoàn tất
+            time.sleep(10)
             
             self.take_screenshot("logs/login_status.png")
-            self.discord.send("🚀 Sentinel Online & Rendering!", "logs/login_status.png")
+            self.discord.send("🚀 Sentinel v44 Online!", "logs/login_status.png")
         except Exception as e:
             self.discord.send(f"❌ Login Error: {e}")
 
@@ -99,9 +96,7 @@ class SentinelAgent:
         self.init_browser()
         self.login_roblox()
         while True:
-            now = datetime.datetime.now().strftime("%H:%M:%S")
-            print(f"💓 [HEARTBEAT] {now} - System Stable.")
-            pyautogui.moveTo(random.randint(100, 800), random.randint(100, 500))
+            print(f"💓 [HEARTBEAT] {datetime.datetime.now().strftime('%H:%M:%S')} - Stable.")
             pyautogui.press('space')
             time.sleep(120)
 
