@@ -34,19 +34,17 @@ jobs:
 
       - name: 🛠️ System Dependencies & Cleanup
         run: |
-          # Dọn dẹp các tiến trình cũ nếu có (Tránh lỗi Port 9222)
           sudo pkill -9 chrome || true
           sudo pkill -9 chromium || true
-          
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends \
             chromium-browser xvfb fluxbox xauth scrot tesseract-ocr \
-            python3-tk python3-dev libx11-dev > /dev/null
+            python3-tk python3-dev libx11-dev \
+            libgl1-mesa-dri libglapi-mesa libosmesa6 mesa-utils # Thư viện đồ họa quan trọng
           
           mkdir -p libs memory/action_steps logs/screenshots extensions
           touch $XAUTHORITY
           xauth add :99 . $(mcookie)
-
       - name: 📦 Python Core Install
         run: |
           pip install --upgrade --target=libs google-genai flask requests pyautogui Pillow \
